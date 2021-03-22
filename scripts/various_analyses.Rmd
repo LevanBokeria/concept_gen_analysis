@@ -1,0 +1,705 @@
+---
+title: "various_analyses"
+output: bookdown::html_document2
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r load-all-libraries, message=FALSE, warning=FALSE, results=FALSE}
+
+# Clean the environment
+rm(list=ls())
+
+# Load libraries
+library(tidyverse)
+library(readxl)
+library(ggpubr)
+library(rstatix)
+library(emmeans)
+library(BayesFactor)
+library(DT)
+library(kableExtra)
+library(assortedRFunctions)
+library(TOSTER)
+library(gridExtra)
+
+# Source other scripts
+source('./utils/load_transform_gather.R')
+
+```
+
+# Load and get the datasets ready
+
+```{r load-transform-gather-filter-qc}
+
+outList <- load_transform_gather()
+
+long_form_data_all_ptp <- 
+    outList$long_form_data_all_ptp
+
+long_form_data_qc_pass_ptp <- 
+    outList$long_form_data_qc_pass_ptp
+
+results_table_qc_pass_ptp_analyzed <- 
+    outList$results_table_qc_pass_ptp_analyzed
+results_table_qc_pass_ptp_analyzed_gathered <- 
+    outList$results_table_qc_pass_ptp_analyzed_gathered
+
+rm(outList)
+
+```
+
+# Compare arrangements for their difficulty in phase 1
+
+## Replot all the arrangements in phase 1
+```{r phase-1-arrangement-order}
+
+# Just phase 1 data for sessions 1 and 2, by arrangement order
+results_table_qc_pass_ptp_analyzed %>%
+        ggplot(aes(x=arr_phase_1_1,y=phase_1_ses_1_2_perf)) + 
+        geom_boxplot(width=0.5,notch = TRUE) + 
+        # geom_jitter(width=0.1) + 
+        geom_dotplot(binaxis='y', stackdir='center',
+                     stackratio=1, dotsize=0.5, fill="black") +
+        stat_summary(fun=mean, geom="point", shape=20, size=5, color="red", fill="red") +
+        ylab("Phase 1, ses 1&2 acc") + 
+        scale_x_discrete(labels=c('Arr1','Arr2','Arr3','Arr4')) +
+        # coord_cartesian(ylim=(c(0.8,0.9))) +
+        theme(axis.text.x = element_text(size=14),
+              axis.text.y = element_text(size=14)) + 
+        ggtitle("Phase 1 scores, Arrangement Order")
+
+# A table showing the data
+results_table_qc_pass_ptp_analyzed %>%
+    group_by(arr_phase_1_1) %>%
+    get_summary_stats(phase_1_ses_1_2_perf, type = 'mean_sd') %>%
+    knitr::kable() %>%
+    kable_styling(bootstrap_options = "striped")
+
+```
+
+
+## Compare arr3 and arr4 for phase 1, are they reliably different? 
+
+I perform an equivalence test which will simultaneously test (a) whether the effect is significantly different from zero and (b) whether its statistically equivalent to some range of minimally interesting effect sizes.
+
+I'm not exactly sure what the maximum difference should be between phase 1 arr3 and arr4 scores, such that it would not be a problem.
+
+Think how many more correct responses for arr3 vs arr4 we would consider to be a problem? We are calculating performance over 2 sessions for each phase, that is 82 trials total. Lets say arr2 vs arr4 differ by 4 correct responses in phase 1, that is 4*100/82=4.878% difference in accuracy. So, if our data show that arr3 vs arr4 differ by an amount that is statistically lower than 4.878, then we'd be happy. 
+
+Another approach for determining the maximum allowed difference would be to look at how much do people improve from phase 1 to phase 2 in the congruent case, how many more toys to they correctly respond do. Phase 2 must surely be better than phase 1 for congruent case, so people's improvements there will tell us the ballpark range for expected difference between an "easy" and "harder" arrangements. Below, you can see a table for each subcondition (but only congruent) with summary statistics for phase2 - phase1 scores. 
+
+Minimal difference we see is 0.02 so 2% difference, for subcondition neck_legs_space & arrangement 4. That suggests 1-2 toy difference between phases, thats very low...
+
+```{r max-allowed-diff-exporation}
+
+results_table_qc_pass_ptp_analyzed %>%
+    filter(congruency == 1) %>%
+    group_by(concept_phase_1,arr_phase_1_1) %>%
+    get_summary_stats(phase_2_min_phase_1_ses_1_2_perf, type = 'mean_sd') %>%
+    knitr::kable() %>%
+    kable_styling(bootstrap_options = "striped")
+```
+
+
+So for the equivalence test, I entered boundaries of 0.26 standardized difference in scores, which corresponds roughly to 0.02 raw difference in scores. 
+
+Results show that the data is not significantly different from 0. However, the 95% confidence interval makes it clear that its consistent with a wide-range of effect sizes. So we cannot make a confident conclusion that arr3 and arr4 are not different in phase 1...
+
+```{r arr3-arr4-phase-1-difference}
+
+m1 <- results_table_qc_pass_ptp_analyzed %>% filter(arr_phase_1_1 == 3) %>% 
+.[['phase_1_ses_1_2_perf']] %>% mean()
+m2 <- results_table_qc_pass_ptp_analyzed %>% filter(arr_phase_1_1 == 15) %>% 
+.[['phase_1_ses_1_2_perf']] %>% mean()
+
+sd1 <- results_table_qc_pass_ptp_analyzed %>% filter(arr_phase_1_1 == 3) %>% 
+.[['phase_1_ses_1_2_perf']] %>% sd()
+sd2 <- results_table_qc_pass_ptp_analyzed %>% filter(arr_phase_1_1 == 15) %>% 
+.[['phase_1_ses_1_2_perf']] %>% sd()
+
+n1 <- results_table_qc_pass_ptp_analyzed %>% filter(arr_phase_1_1 == 3) %>% 
+    nrow()
+n2 <- results_table_qc_pass_ptp_analyzed %>% filter(arr_phase_1_1 == 15) %>% 
+    nrow()
+
+TOSTtwo(m1 = m1, m2 = m2, sd1 = sd1, sd2 = sd2, n1 = n1, n2 = n2, low_eqbound_d = -0.26, high_eqbound_d = 0.26)
+
+
+```
+
+## Compare arr1 and arr2 for phase 1, are they different? 
+
+```{r arr1-arr2-phase-1-difference}
+
+m1 <- results_table_qc_pass_ptp_analyzed %>% filter(arr_phase_1_1 == 1) %>% 
+.[['phase_1_ses_1_2_perf']] %>% mean()
+m2 <- results_table_qc_pass_ptp_analyzed %>% filter(arr_phase_1_1 == 14) %>% 
+.[['phase_1_ses_1_2_perf']] %>% mean()
+
+sd1 <- results_table_qc_pass_ptp_analyzed %>% filter(arr_phase_1_1 == 1) %>% 
+.[['phase_1_ses_1_2_perf']] %>% sd()
+sd2 <- results_table_qc_pass_ptp_analyzed %>% filter(arr_phase_1_1 == 14) %>% 
+.[['phase_1_ses_1_2_perf']] %>% sd()
+
+n1 <- results_table_qc_pass_ptp_analyzed %>% filter(arr_phase_1_1 == 1) %>% 
+    nrow()
+n2 <- results_table_qc_pass_ptp_analyzed %>% filter(arr_phase_1_1 == 14) %>% 
+    nrow()
+
+TOSTtwo(m1 = m1, m2 = m2, sd1 = sd1, sd2 = sd2, n1 = n1, n2 = n2, low_eqbound_d = -0.28, high_eqbound_d = 0.28)
+
+
+```
+
+# Frequentist ANOVA analysis
+
+
+## What if arr3 always in phase 2? Or arr4 always in phase 2.
+
+### Plots
+
+```{r various-analyses-12, fig.width=13, fig.height=5}
+
+plot1 <- results_table_qc_pass_ptp_analyzed_gathered %>%
+    filter(arrangement_pairs == 'arr_3_4' & arr_phase_2_1 == '3') %>%
+    reorder_levels(arr_phase_1_1, order=c(3,15)) %>%
+    ggplot(aes(x=arr_phase_1_1,y=ses_1_2_perf,fill=phase)) +
+    geom_boxplot(width=0.5,notch = TRUE,outlier.shape = NA) + 
+    geom_point(pch=21,
+               position = position_jitterdodge(dodge.width=0.5,
+                                               jitter.width=0.1)) +    
+    scale_fill_manual(values=c('#045a8d','#d0d1e6'),
+                name='Phase',
+    labels=c('Phase 1','Phase 2')) +
+    xlab('Phase 1 arrangement') + 
+    scale_y_continuous(name='Ses 1-2 scores',
+                       breaks=seq(0.4,1,0.1),
+                       limits=c(0.48,1))+
+    scale_x_discrete(labels=c('Arr3 (No Outlier)','Arr4 (Outlier)')) + 
+    ggtitle('Always Arr3 in phase 2') +
+    theme(plot.title = element_text(hjust = 0.5),
+          legend.position = 'left') + 
+    annotate('text', label='3-3', x=1, y=1) +
+    annotate('text', label='4-3', x=2, y=1)
+
+plot2 <- results_table_qc_pass_ptp_analyzed_gathered %>%
+    filter(arrangement_pairs == 'arr_3_4' & arr_phase_2_1 == '15') %>%
+    reorder_levels(arr_phase_1_1, order=c(15,3)) %>%
+    ggplot(aes(x=arr_phase_1_1,y=ses_1_2_perf,fill=phase)) +
+    geom_boxplot(width=0.5,notch = TRUE,outlier.shape = NA) + 
+    geom_point(pch=21,
+               position = position_jitterdodge(dodge.width=0.5,
+                                               jitter.width=0.1)) +    
+    scale_fill_manual(values=c('#045a8d','#d0d1e6'),
+                name='Phase',
+    labels=c('Phase 1','Phase 2')) +
+    xlab('Phase 1 arrangement') + 
+    scale_y_continuous(name='Ses 1-2 scores',
+                       breaks=seq(0.4,1,0.1),
+                       limits=c(0.48,1))+
+    scale_x_discrete(labels=c('Arr4 (Outlier)','Arr3 (No Outlier)')) + 
+    ggtitle('Always Arr4 in phase 2') +
+    theme(plot.title = element_text(hjust = 0.5)) +
+    annotate('text', label='4-4', x=1, y=1) +
+    annotate('text', label='3-4', x=2, y=1)    
+
+grid.arrange(plot1, plot2, ncol=2)
+
+
+```
+
+So we're hoping to take the left scenario, with arr3 being in phase 2 always. The right side scenario we say is bad, because when arr4 comes after arr3, people just do very, very well! Despite it being incongruent.
+
+But the issue is, if there is some weird explanation of this effect when arr4 comes after arr3
+
+
+## What if arr1 always in phase 2? Or arr2 always in phase 2.
+
+### Plots
+
+```{r various-analyses-13, fig.width=13, fig.height=5}
+
+plot1 <- results_table_qc_pass_ptp_analyzed_gathered %>%
+    filter(arrangement_pairs == 'arr_1_2' & arr_phase_2_1 == '14') %>%
+    reorder_levels(arr_phase_1_1, order=c(14,1)) %>%
+    ggplot(aes(x=arr_phase_1_1,y=ses_1_2_perf,fill=phase)) +
+    geom_boxplot(width=0.5,notch = TRUE,outlier.shape = NA) + 
+    geom_point(pch=21,
+               position = position_jitterdodge(dodge.width=0.5,
+                                               jitter.width=0.1)) +    
+    scale_fill_manual(values=c('#045a8d','#d0d1e6'),
+                name='Phase',
+    labels=c('Phase 1','Phase 2')) +
+    xlab('Phase 1 arrangement') + 
+    scale_y_continuous(name='Ses 1-2 scores',
+                       breaks=seq(0.4,1,0.1),
+                       limits=c(0.48,1))+
+    scale_x_discrete(labels=c('Arr2 (No Outlier)','Arr1 (Outlier)')) + 
+    ggtitle('Always Arr2 in phase 2') +
+    theme(plot.title = element_text(hjust = 0.5),
+          legend.position = 'left') + 
+    annotate('text', label='2-2', x=1, y=1) +
+    annotate('text', label='1-2', x=2, y=1) 
+
+plot2 <- results_table_qc_pass_ptp_analyzed_gathered %>%
+    filter(arrangement_pairs == 'arr_1_2' & arr_phase_2_1 == '1') %>%
+    reorder_levels(arr_phase_1_1, order=c(1,14)) %>%
+    ggplot(aes(x=arr_phase_1_1,y=ses_1_2_perf,fill=phase)) +
+    geom_boxplot(width=0.5,notch = TRUE,outlier.shape = NA) + 
+    geom_point(pch=21,
+               position = position_jitterdodge(dodge.width=0.5,
+                                               jitter.width=0.1)) +    
+    scale_fill_manual(values=c('#045a8d','#d0d1e6'),
+                name='Phase',
+    labels=c('Phase 1','Phase 2')) +
+    xlab('Phase 1 arrangement') + 
+    scale_y_continuous(name='Ses 1-2 scores',
+                       breaks=seq(0.4,1,0.1),
+                       limits=c(0.48,1))+
+    scale_x_discrete(labels=c('Arr1 (Outlier)','Arr2 (No Outlier)')) + 
+    ggtitle('Always Arr1 in phase 2') +
+    theme(plot.title = element_text(hjust = 0.5)) + 
+    annotate('text', label='1-1', x=1, y=1) +
+    annotate('text', label='2-1', x=2, y=1)        
+
+           
+
+grid.arrange(plot1, plot2, ncol=2)
+
+
+```
+
+### Frequentist ANOVAs for phase 2 always having arr3 or always having arr4
+
+```{r various-analyses-14 }
+
+aov_arr3_in_phase2 <- results_table_qc_pass_ptp_analyzed %>%
+    filter(arr_phase_2_1 == 3) %>%
+    anova_test(phase_2_min_phase_1_ses_1_2_perf ~ congruency*concept_phase_2)
+
+aov_arr3_in_phase2 %>%
+        knitr::kable(caption = 'Arr3 always in phase 2, congruency -X- concept') %>%
+        kable_styling(bootstrap_options = "striped")
+
+aov_arr4_in_phase2 <- results_table_qc_pass_ptp_analyzed %>%
+    filter(arr_phase_2_1 == 15) %>%
+    anova_test(phase_2_min_phase_1_ses_1_2_perf ~ congruency*concept_phase_2)
+
+aov_arr4_in_phase2 %>%
+        knitr::kable(caption = 'Arr4 always in phase 2, congruency -X- concept') %>%
+        kable_styling(bootstrap_options = "striped")
+
+# results_table_qc_pass_ptp_analyzed %>%
+#     filter(arr_phase_2_1 == 15) %>%
+#     group_by(arr_phase_1_1) %>%
+#     get_summary_stats(phase_2_min_phase_1_ses_1_2_perf, type = 'median') %>%
+#     knitr::kable() %>%
+#         kable_styling(bootstrap_options = "striped")
+# 
+# results_table_qc_pass_ptp_analyzed_gathered %>%
+#     filter(arr_phase_2_1 == 15) %>%
+#     group_by(arr_phase_1_1,phase) %>%
+#     get_summary_stats(ses_1_2_perf, type = 'median') %>%
+#     knitr::kable() %>%
+#         kable_styling(bootstrap_options = "striped")
+
+```
+
+
+## Impact of lower-left outlier in Phase 1
+
+### P2-P1 Scores:
+
+```{r sliceAndDicePlots-1}
+
+# Plot both experiments
+results_table_qc_pass_ptp_analyzed %>%
+        ggplot(aes(x=arr_phase_1_1,
+                   y=phase_2_min_phase_1_ses_1_2_perf,
+                   fill=congruency)) + 
+        geom_boxplot(width=0.5,notch = TRUE, outlier.shape = NA) + 
+        geom_point(pch=21,
+                   position = position_jitterdodge(dodge.width=0.5,
+                                                   jitter.width=0.1)) +
+        ylab("P2-P1, ses 1&2 acc") + 
+        xlab('Phase 1') +
+        scale_x_discrete(labels=c('Arr1\n(Outlier)','Arr2','Arr3','Arr4\n(Outlier)')) +
+        theme(axis.text.x = element_text(size=14),
+              axis.text.y = element_text(size=14)) + 
+        scale_fill_manual(values=c('#e5f5f9','#2ca25f'),
+                          name='Congruency',
+                          labels=c('Incongruent','Congruent'))
+# Basic summary table
+results_table_qc_pass_ptp_analyzed %>%
+        group_by(arr_phase_1_1,congruency) %>%
+        get_summary_stats(phase_2_min_phase_1_ses_1_2_perf, type = 'mean_sd') %>%
+        knitr::kable() %>%
+        kable_styling(bootstrap_options = "striped")
+
+# A combined full ANOVA with experiment as a factor
+aov_4_both_exp <- results_table_qc_pass_ptp_analyzed %>%
+        anova_test(
+                phase_2_min_phase_1_ses_1_2_perf ~
+                        congruency*concept_phase_1*phase_1_lower_left_outlier*arrangement_pairs)
+aov_4_both_exp %>%
+        knitr::kable(caption = 'Full ANOVA, with factors: Experiment, congruency, concept-order, arrangement-order') %>%
+        kable_styling(bootstrap_options = "striped")
+
+
+# ANOVA
+aov_3_arr_1_2 <- results_table_qc_pass_ptp_analyzed %>%
+        filter(arrangement_pairs == "arr_1_2") %>%
+        anova_test(
+        phase_2_min_phase_1_ses_1_2_perf ~
+                congruency*concept_phase_1*phase_1_lower_left_outlier)
+aov_3_arr_1_2 %>%
+        knitr::kable(caption = 'Expt1: congruency -X- concept -X- outlier') %>%
+        kable_styling(bootstrap_options = "striped")
+
+aov_3_arr_3_4 <- results_table_qc_pass_ptp_analyzed %>%
+        filter(arrangement_pairs == "arr_3_4") %>%
+        anova_test(
+                phase_2_min_phase_1_ses_1_2_perf ~
+                        congruency*concept_phase_1*phase_1_lower_left_outlier)
+aov_3_arr_3_4 %>%
+        knitr::kable(caption = 'Expt2: congruency -X- concept -X- outlier') %>%
+        kable_styling(bootstrap_options = "striped")
+
+
+
+```
+
+Question: In these ANOVAs we use the phase 1 concept and phase 1 arrangement orders. Should we also do an ANOVA but with phase 2 concept/arrangement orders being the factors? 
+
+## Impact of lower-left outlier in Phase 2
+
+### P2-P1 scores:
+
+```{r various-analyses-11}
+
+# Plot both experiments
+results_table_qc_pass_ptp_analyzed %>%
+        reorder_levels(arr_phase_2_1, order=c(1,14,3,15)) %>%
+        ggplot(aes(x=arr_phase_2_1,
+                   y=phase_2_min_phase_1_ses_1_2_perf,
+                   fill=congruency)) + 
+        geom_boxplot(width=0.5,notch = TRUE, outlier.shape = NA) + 
+        geom_point(pch=21,
+                   position = position_jitterdodge(dodge.width=0.5,
+                                                   jitter.width=0.1)) +
+        ylab("P2-P1, ses 1&2 acc") + 
+        xlab('Phase 2') +
+        scale_x_discrete(labels=c('Arr1\n(Outlier)','Arr2','Arr3','Arr4\n(Outlier)')) +
+        theme(axis.text.x = element_text(size=14),
+              axis.text.y = element_text(size=14)) + 
+        scale_fill_manual(values=c('#e5f5f9','#2ca25f'),
+                          name='Congruency',
+                          labels=c('Incongruent','Congruent'))
+# Basic summary table
+results_table_qc_pass_ptp_analyzed %>%
+        group_by(arr_phase_2_1,congruency) %>%
+        reorder_levels(arr_phase_2_1, order=c(1,14,3,15)) %>%
+        get_summary_stats(phase_2_min_phase_1_ses_1_2_perf, type = 'mean_sd') %>%
+        knitr::kable(caption = 'Basic summary table') %>%
+        kable_styling(bootstrap_options = "striped")
+
+# Collapse for outlier / no-outlier
+results_table_qc_pass_ptp_analyzed %>%
+    ggplot(aes(x=phase_2_lower_left_outlier,
+               y=phase_2_min_phase_1_ses_1_2_perf,
+               fill=congruency)) +
+    geom_boxplot(outlier.shape = NA) +
+    geom_point(pch=21,
+           position = position_jitterdodge(dodge.width=0.75,
+                                           jitter.width=0.2)) +
+    xlab('Phase 2 was outlier') +
+    ylab('P2-P1') + 
+    scale_x_discrete(labels=c('No Outlier','Outlier')) +
+    ggtitle('Congruency -X- outlier in phase 2\n Both experiments, P2-P1 scores ') +
+    theme(plot.title = element_text(hjust = 0.5)) +
+    scale_fill_manual(values=c('#e5f5f9','#2ca25f'),
+                        name='Congruency',
+                        labels=c('Incongruent','Congruent')) +
+    theme(axis.text.x = element_text(size=14),
+          axis.text.y = element_text(size=14))    
+
+
+
+# A combined full ANOVA with experiment as a factor
+aov_4_both_exp <- results_table_qc_pass_ptp_analyzed %>%
+        anova_test(
+                phase_2_min_phase_1_ses_1_2_perf ~
+                        congruency*concept_phase_2*phase_2_lower_left_outlier*arrangement_pairs)
+aov_4_both_exp %>%
+        knitr::kable(caption = 'Full ANOVA, with factors: Experiment, congruency, concept in P2, outlier in P2') %>%
+        kable_styling(bootstrap_options = "striped")
+
+
+# ANOVA
+aov_3_arr_1_2 <- results_table_qc_pass_ptp_analyzed %>%
+        filter(arrangement_pairs == "arr_1_2") %>%
+        anova_test(
+        phase_2_min_phase_1_ses_1_2_perf ~
+                congruency*concept_phase_2*phase_2_lower_left_outlier)
+aov_3_arr_1_2 %>%
+        knitr::kable(caption = 'Expt1: congruency -X- concept -X- outlier') %>%
+        kable_styling(bootstrap_options = "striped")
+
+aov_3_arr_3_4 <- results_table_qc_pass_ptp_analyzed %>%
+        filter(arrangement_pairs == "arr_3_4") %>%
+        anova_test(
+                phase_2_min_phase_1_ses_1_2_perf ~
+                        congruency*concept_phase_2*phase_2_lower_left_outlier)
+aov_3_arr_3_4 %>%
+        knitr::kable(caption = 'Expt2: congruency -X- concept -X- outlier') %>%
+        kable_styling(bootstrap_options = "striped")
+
+```
+
+### Just Phase 2 scores:
+
+```{r various-analyses-60}
+
+# Yet another plot, here contrast outlier in phase 2 for congr vs incongr, VS no-outlier in phase 2 for congr vs incongr.
+# Rationale: outlier in phase 2 seems to be the same regardless of congr, but no-outlier in phase 2 depends on congr. So there should be an interaction
+results_table_qc_pass_ptp_analyzed %>%
+    ggplot(aes(x=phase_2_lower_left_outlier,
+               y=phase_2_ses_1_2_perf,
+               fill=congruency)) +
+    geom_boxplot(outlier.shape = NA) +
+    geom_point(pch=21,
+           position = position_jitterdodge(dodge.width=0.75,
+                                           jitter.width=0.2)) +
+    xlab('Phase 2 arrangement') +
+    scale_y_continuous(name='Phase 2 scores',
+                       breaks=seq(0.5,1,0.1),
+                       limits=c(0.55,1)) +
+    scale_x_discrete(labels=c('No Outlier','Outlier')) +
+    ggtitle('Contrasting congruency, depending on Outlier vs No-outlier being in phase 2\n Both experiments. Only Phase 2 scores') +
+    theme(plot.title = element_text(hjust = 0.5)) + 
+    scale_fill_manual(values=c('#e5f5f9','#2ca25f'),
+                        name='Congruency',
+                        labels=c('Incongruent','Congruent')) +
+    theme(axis.text.x = element_text(size=14),
+          axis.text.y = element_text(size=14))
+
+results_table_qc_pass_ptp_analyzed %>%
+    anova_test(phase_2_ses_1_2_perf ~ congruency*phase_2_lower_left_outlier*arrangement_pairs) %>%
+    knitr::kable(caption = 'Congruency -X- Phase 2 outlier -X- Experiment') %>%
+    kable_styling(bootstrap_options = "striped")
+
+```
+
+```{r various-analyses-9, fig.width=13, fig.height=5}
+
+plot1 <- results_table_qc_pass_ptp_analyzed %>% 
+    ggplot(aes(x=phase_1_lower_left_outlier,y=phase_2_ses_1_2_perf,fill=phase_2_lower_left_outlier)) +
+    geom_boxplot(outlier.shape = NA) +
+    geom_point(pch=21,
+           position = position_jitterdodge(dodge.width=0.7,
+                                           jitter.width=0.1)) +
+    xlab('Phase 1') +
+    scale_y_continuous(name='Phase 2 scores',
+                       breaks=seq(0.5,1,0.1),
+                       limits=c(0.55,1))+    
+    ggtitle('Only Phase 2 scores') + 
+    theme(plot.title = element_text(hjust = 0.5),
+          legend.position = 'left') + 
+    scale_fill_manual(values=c('#f0f0f0','#636363'),
+                        name='Phase 2',
+                        labels=c('No outlier','Outlier')) +
+    scale_x_discrete(labels=c('No Outlier','Outlier'))
+
+plot2 <- results_table_qc_pass_ptp_analyzed %>% 
+    ggplot(aes(x=congruency,y=phase_2_ses_1_2_perf,fill=phase_2_lower_left_outlier)) +
+    geom_boxplot(outlier.shape = NA) +
+    geom_point(pch=21,
+           position = position_jitterdodge(dodge.width=0.7,
+                                           jitter.width=0.1)) +
+    xlab('Congruency') +
+    scale_y_continuous(name='Phase 2 scores',
+                       breaks=seq(0.5,1,0.1),
+                       limits=c(0.55,1))+    
+    ggtitle('Only Phase 2 scores') + 
+    theme(plot.title = element_text(hjust = 0.5)) + 
+    scale_fill_manual(values=c('#f0f0f0','#636363'),
+                        name='Phase 2',
+                        labels=c('No outlier','Outlier')) + 
+    scale_x_discrete(labels=c('Incongruent','Congruent'))
+
+grid.arrange(plot1, plot2, ncol=2)
+
+# Full anova
+results_table_qc_pass_ptp_analyzed %>%
+    anova_test(phase_2_ses_1_2_perf ~ phase_1_lower_left_outlier*phase_2_lower_left_outlier*arrangement_pairs) %>%
+    knitr::kable(caption = 'Phase 1 outlier -X- Phase 2 outlier -X- Experiment') %>%
+    kable_styling(bootstrap_options = "striped")
+
+results_table_qc_pass_ptp_analyzed %>%
+    anova_test(phase_2_ses_1_2_perf ~ congruency*phase_2_lower_left_outlier*arrangement_pairs) %>%
+    knitr::kable(caption = 'Congruency -X- Phase 2 outlier -X- Experiment') %>%
+    kable_styling(bootstrap_options = "striped")
+
+
+```
+
+## Expt2: Are phase 2 scores influenced by phase 1 arrangement? Or by congruency?
+
+```{r various-analyses-6, fig.width=13, fig.height=5}
+
+# Plot contrast phase 1 vs phase 2 arrangements
+plot1 <- results_table_qc_pass_ptp_analyzed %>%
+    filter(arrangement_pairs == 'arr_3_4') %>%
+    reorder_levels(arr_phase_1_1, order=c(15,3)) %>%
+    reorder_levels(arr_phase_2_1, order=c(15,3)) %>%
+    ggplot(aes(x=arr_phase_1_1,y=phase_2_ses_1_2_perf,fill=arr_phase_2_1)) +
+    geom_boxplot(outlier.shape = NA) +
+    geom_point(pch=21,
+           position = position_jitterdodge(dodge.width=0.8,
+                                           jitter.width=0.1)) +
+    xlab('Arrangement in Phase 1') +
+    scale_x_discrete(labels=c('Arr4 (Outlier)','Arr3 (No outlier)')) +
+    scale_y_continuous(name='Phase 2 scores',
+                       breaks=seq(0.5,1,0.1),
+                       limits=c(0.55,1))+
+    ggtitle('Contrasting Phase 1 arr\n Expt2. Only Phase 2 scores') +
+    theme(plot.title = element_text(hjust = 0.5),
+          legend.position = 'left') +
+    scale_fill_manual(values=c('#f0f0f0','#636363'),
+                        name='Phase 2 arr',
+                        labels=c('arr4 (Outlier)','arr3 (No Outlier)'))
+
+plot2 <- results_table_qc_pass_ptp_analyzed %>%
+    filter(arrangement_pairs == 'arr_3_4') %>%
+    reorder_levels(arr_phase_1_1, order=c(15,3)) %>%
+    reorder_levels(arr_phase_2_1, order=c(15,3)) %>%    
+    ggplot(aes(x=congruency,y=phase_2_ses_1_2_perf,fill=arr_phase_2_1)) +
+    geom_boxplot(outlier.shape = NA) +
+    geom_point(pch=21,
+           position = position_jitterdodge(dodge.width=0.8,
+                                           jitter.width=0.1)) +
+    xlab('Congruency') +
+    scale_y_continuous(name='Phase 2 scores',
+                       breaks=seq(0.5,1,0.1),
+                       limits=c(0.55,1))+ 
+    scale_x_discrete(labels=c('Incongruent','Congruent')) +
+    ggtitle('Contrasting Congruency\n Expt2. Only Phase 2 scores') +
+    theme(plot.title = element_text(hjust = 0.5)) +
+    scale_fill_manual(values=c('#f0f0f0','#636363'),
+                        name='Phase 2 arr',
+                        labels=c('arr4(Outlier)','arr3(No Outlier)'))
+
+grid.arrange(plot1, plot2, ncol=2)
+
+# # ANOVA 
+results_table_qc_pass_ptp_analyzed %>%
+    filter(arrangement_pairs == 'arr_3_4') %>%
+    anova_test(phase_2_ses_1_2_perf ~ arr_phase_1_1*arr_phase_2_1) %>%
+    knitr::kable(caption = "Contrasting Phase 1 arrangement") %>%
+    kable_styling(bootstrap_options = "striped")
+
+results_table_qc_pass_ptp_analyzed %>%
+    filter(arrangement_pairs == 'arr_3_4') %>%
+    anova_test(phase_2_ses_1_2_perf ~ congruency*arr_phase_2_1) %>%
+    knitr::kable(caption = "Contrasting congruency") %>%
+    kable_styling(bootstrap_options = "striped")
+
+```
+
+```{r various-analyses-7}
+
+# Yet another plot, here contrast arr4 in phase 2 for congr vs incongr, VS arr3 in phase 2 for congr vs incongr.
+# Rationale: arr4 in phase 2 seems to be the same regardless of congr, but arr3 in phase 2 depends on congr. So there should be an interaction
+results_table_qc_pass_ptp_analyzed %>%
+    filter(arrangement_pairs == 'arr_3_4') %>%
+    reorder_levels(arr_phase_1_1, order=c(15,3)) %>%
+    reorder_levels(arr_phase_2_1, order=c(15,3)) %>%    
+    ggplot(aes(x=arr_phase_2_1,y=phase_2_ses_1_2_perf,fill=congruency)) +
+    geom_boxplot(outlier.shape = NA) +
+    geom_point(pch=21,
+           position = position_jitterdodge(dodge.width=0.75,
+                                           jitter.width=0.1)) +
+    xlab('Phase 2 arrangement') +
+    scale_y_continuous(name='Phase 2 scores',
+                       breaks=seq(0.5,1,0.1),
+                       limits=c(0.55,1)) +
+    scale_x_discrete(labels=c('Arr4 (Outlier)','Arr3 (No Outlier)')) +
+    ggtitle('Contrasting congruency, depending on Arr4 vs Arr3 being in phase 2\n Expt2. Only Phase 2 scores') +
+    theme(plot.title = element_text(hjust = 0.5)) +
+    scale_fill_manual(values=c('#e5f5f9','#2ca25f'),
+                        name='Congruency',
+                        labels=c('Incongruent','Congruent'))
+
+# ANOVA
+results_table_qc_pass_ptp_analyzed %>%
+    filter(arrangement_pairs == 'arr_3_4') %>%
+    anova_test(phase_2_ses_1_2_perf ~ congruency*arr_phase_2_1) %>%
+    knitr::kable(caption = "Contrasting congruency") %>%
+    kable_styling(bootstrap_options = "striped")
+
+```
+
+
+## Expt1: Are phase 2 scores influenced by phase 1 arrangement? Or by congruency?
+
+```{r various-analyses-8, fig.width=13, fig.height=5}
+
+# Plot contrast phase 1 vs phase 2 arrangements
+plot1 <- results_table_qc_pass_ptp_analyzed %>%
+    filter(arrangement_pairs == 'arr_1_2') %>%
+    ggplot(aes(x=arr_phase_1_1,y=phase_2_ses_1_2_perf,fill=arr_phase_2_1)) +
+    geom_boxplot(outlier.shape = NA) +
+    geom_point(pch=21,
+           position = position_jitterdodge(dodge.width=0.8,
+                                           jitter.width=0.1)) +
+    xlab('Arrangement in Phase 1') +
+    scale_y_continuous(name='Phase 2 scores',
+                       breaks=seq(0.5,1,0.1),
+                       limits=c(0.55,1))+
+    scale_x_discrete(labels=c('Arr1 (Outlier)','Arr2 (No Outlier)')) +
+    ggtitle('Contrasting Phase 1 arr\n Expt1. Only Phase 2 scores') +
+    theme(plot.title = element_text(hjust = 0.5),
+          legend.position = 'left') + 
+    scale_fill_manual(values=c('#f0f0f0','#636363'),
+                        name='Phase 2 arr',
+                        labels=c('arr1 (Outlier)','arr2 (No Outlier)'))
+
+plot2 <- results_table_qc_pass_ptp_analyzed %>%
+    filter(arrangement_pairs == 'arr_1_2') %>%
+    ggplot(aes(x=congruency,y=phase_2_ses_1_2_perf,fill=arr_phase_2_1)) +
+    geom_boxplot(outlier.shape = NA) +
+    geom_point(pch=21,
+           position = position_jitterdodge(dodge.width=0.8,
+                                           jitter.width=0.1)) +
+    xlab('Congruency') +
+    scale_y_continuous(name='Phase 2 scores',
+                       breaks=seq(0.5,1,0.1),
+                       limits=c(0.55,1))+ 
+    scale_x_discrete(labels=c('Incongruent','Congruent')) +
+    ggtitle('Contrasting Congruency\n Expt1. Only Phase 2 scores') +
+    theme(plot.title = element_text(hjust = 0.5)) + 
+    scale_fill_manual(values=c('#f0f0f0','#636363'),
+                        name='Phase 2 arr',
+                        labels=c('arr1 (Outlier)','arr2 (No Outlier)'))    
+
+grid.arrange(plot1, plot2, ncol=2)
+
+# # ANOVA 
+results_table_qc_pass_ptp_analyzed %>%
+    filter(arrangement_pairs == 'arr_1_2') %>%
+    anova_test(phase_2_ses_1_2_perf ~ arr_phase_1_1*arr_phase_2_1) %>%
+    knitr::kable(caption = "Contrasting Phase 1 arrangement") %>%
+    kable_styling(bootstrap_options = "striped")
+
+results_table_qc_pass_ptp_analyzed %>%
+    filter(arrangement_pairs == 'arr_1_2') %>%
+    anova_test(phase_2_ses_1_2_perf ~ congruency*arr_phase_2_1) %>%
+    knitr::kable(caption = "Contrasting congruency") %>%
+    kable_styling(bootstrap_options = "striped")
+
+```
+
+Basically, in both of these cases, I am not sure which one is the right analysis. Should we be looking at [difference b/w outlier-no outlier in phase 2] depending on congruency, or depending on phase 1 outlier-no outlier. 

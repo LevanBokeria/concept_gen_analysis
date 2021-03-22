@@ -1,0 +1,31 @@
+No renderer backend detected. gganimate will default to writing frames to separate files
+Consider installing:
+- the `gifski` package for gif output
+- the `av` package for video output
+and restarting the R session
+************
+Welcome to BayesFactor 0.9.12-4.2. If you have questions, please contact Richard Morey (richarddmorey@gmail.com).
+
+Type BFManual() to open the manual.
+************
+── [1mAttaching packages[22m ──────────────────────────────────────────── tidyverse 1.3.0 ──
+[32m✓[39m [34mtibble [39m 3.0.3     [32m✓[39m [34mdplyr  [39m 1.0.2
+[32m✓[39m [34mtidyr  [39m 1.1.2     [32m✓[39m [34mstringr[39m 1.4.0
+[32m✓[39m [34mreadr  [39m 1.3.1     [32m✓[39m [34mforcats[39m 0.5.0
+[32m✓[39m [34mpurrr  [39m 0.3.4     
+── [1mConflicts[22m ─────────────────────────────────────────────── tidyverse_conflicts() ──
+[31mx[39m [34mdplyr[39m::[32marrange()[39m   masks [34mplyr[39m::arrange()
+[31mx[39m [34mdplyr[39m::[32mcombine()[39m   masks [34mgridExtra[39m::combine()
+[31mx[39m [34mpurrr[39m::[32mcompact()[39m   masks [34mplyr[39m::compact()
+[31mx[39m [34mdplyr[39m::[32mcount()[39m     masks [34mplyr[39m::count()
+[31mx[39m [34mtidyr[39m::[32mexpand()[39m    masks [34mMatrix[39m::expand()
+[31mx[39m [34mdplyr[39m::[32mfailwith()[39m  masks [34mplyr[39m::failwith()
+[31mx[39m [34mdplyr[39m::[32mfilter()[39m    masks [34mstats[39m::filter()
+[31mx[39m [34mdplyr[39m::[32mid()[39m        masks [34mplyr[39m::id()
+[31mx[39m [34mdplyr[39m::[32mlag()[39m       masks [34mstats[39m::lag()
+[31mx[39m [34mdplyr[39m::[32mmutate()[39m    masks [34mplyr[39m::mutate()
+[31mx[39m [34mtidyr[39m::[32mpack()[39m      masks [34mMatrix[39m::pack()
+[31mx[39m [34mdplyr[39m::[32mrename()[39m    masks [34mplyr[39m::rename()
+[31mx[39m [34mdplyr[39m::[32msummarise()[39m masks [34mplyr[39m::summarise()
+[31mx[39m [34mdplyr[39m::[32msummarize()[39m masks [34mplyr[39m::summarize()
+[31mx[39m [34mtidyr[39m::[32munpack()[39m    masks [34mMatrix[39m::unpack()

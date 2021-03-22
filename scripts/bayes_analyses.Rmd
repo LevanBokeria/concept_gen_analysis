@@ -1,0 +1,241 @@
+---
+title: "various_analyses"
+output: bookdown::html_document2
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r load-all-libraries, message=FALSE, warning=FALSE, results=FALSE}
+
+# Clean the environment
+rm(list=ls())
+
+# Load libraries
+library(tidyverse)
+library(readxl)
+library(ggpubr)
+library(rstatix)
+library(emmeans)
+library(BayesFactor)
+library(DT)
+library(kableExtra)
+library(assortedRFunctions)
+library(TOSTER)
+library(gridExtra)
+
+# Source other scripts
+source('./utils/load_transform_gather.R')
+
+```
+
+# Load and get the datasets ready
+
+```{r load-transform-gather-filter-qc}
+
+outList <- load_transform_gather()
+
+long_form_data_all_ptp <- 
+    outList$long_form_data_all_ptp
+
+long_form_data_qc_pass_ptp <- 
+    outList$long_form_data_qc_pass_ptp
+
+results_table_qc_pass_ptp_analyzed <- 
+    outList$results_table_qc_pass_ptp_analyzed
+results_table_qc_pass_ptp_analyzed_gathered <- 
+    outList$results_table_qc_pass_ptp_analyzed_gathered
+
+rm(outList)
+
+```
+
+# Bayesian ANOVA analysis
+
+## Bayesian ANOVA for both experiments combined
+
+```{r various-analyses-1 }
+
+# Basic summary table
+results_table_qc_pass_ptp_analyzed %>%
+        group_by(arr_phase_1_1,congruency) %>%
+        get_summary_stats(phase_2_min_phase_1_ses_1_2_perf, type = 'mean_sd') %>%
+        knitr::kable() %>%
+        kable_styling(bootstrap_options = "striped")
+
+# bf_both_expt <- anovaBF(phase_2_min_phase_1_ses_1_2_perf~
+#                             congruency*
+#                             concept_phase_1*
+#                             phase_1_lower_left_outlier*
+#                             arrangement_pairs, 
+#              data = results_table_qc_pass_ptp_analyzed,
+#              whichModels="withmain",
+#              whichRandom = "ptp", iterations = 100000)
+# 
+# bf_both_expt <- sort(bf_both_expt, decreasing = TRUE)
+# 
+# bf_both_expt %>% knitr::kable() %>%
+#         kable_styling(bootstrap_options = "striped")
+
+```
+
+## Bayesian ANOVA for arr1-2
+
+```{r various-analyses-2 }
+
+# results_table_arr_1_2 <- results_table_qc_pass_ptp_analyzed %>%
+#         filter(arr_phase_1_1 == 1 | arr_phase_1_1 == 14)
+# 
+# bf_arr_1_2 <- anovaBF(phase_2_min_phase_1_ses_1_2_perf~
+#                               congruency*
+#                               concept_phase_1*
+#                               arr_phase_1_1, 
+#              data = results_table_arr_1_2,
+#              whichModels="withmain",
+#              whichRandom = "ptp", iterations = 100000)
+# 
+# bf_arr_1_2 <- sort(bf_arr_1_2, decreasing = TRUE)
+# 
+# bf_arr_1_2 %>% knitr::kable() %>%
+#         kable_styling(bootstrap_options = "striped")
+
+```
+
+## Bayesian ANOVA for arr3-4
+
+```{r various-analyses-3 }
+
+# results_table_arr_3_4 <- results_table_qc_pass_ptp_analyzed %>%
+#         filter(arr_phase_1_1 == 3 | arr_phase_1_1 == 15)
+# 
+# bf_arr_3_4 <- anovaBF(phase_2_min_phase_1_ses_1_2_perf~
+#                               congruency*
+#                               concept_phase_1*
+#                               arr_phase_1_1, 
+#              data = results_table_arr_3_4,
+#              whichModels="withmain",
+#              whichRandom = "ptp", iterations = 100000)
+# 
+# bf_arr_3_4 <- sort(bf_arr_3_4, decreasing = TRUE)
+# 
+# bf_arr_3_4 %>% knitr::kable() %>% 
+#         kable_styling(bootstrap_options = "striped")
+
+
+```
+
+# Bayesian t-test analysis
+
+## For arr1-2
+
+```{r various-analyses-4}
+# 
+# # Analyze session differences
+# arr1_2_ses_1_2_perf_congruent_1 <- results_table_arr_1_2 %>%
+#         filter(congruency == 1) %>%
+#         select(phase_2_min_phase_1_ses_1_2_perf) %>%
+#         .[[1]]
+# arr1_2_ses_1_2_perf_congruent_0 <- results_table_arr_1_2 %>%
+#         filter(congruency == 0) %>%
+#         select(phase_2_min_phase_1_ses_1_2_perf) %>%
+#         .[[1]]
+# 
+# arr1_2_bf_ses_1_2_perf <-
+#     reportBF(ttestBF(
+#         arr1_2_ses_1_2_perf_congruent_1,
+#         arr1_2_ses_1_2_perf_congruent_0,
+#         paired = FALSE
+#     ),
+#     4)
+# 
+# arr1_2_bf_ses_1_2_perf
+# 
+# # Normal t-test?
+# t.test(arr1_2_ses_1_2_perf_congruent_0,arr1_2_ses_1_2_perf_congruent_1,paired=FALSE)
+```
+The BF for t-test matches the congruency main effect reported by the Bayesian ANOVA.
+
+## For arr3-4
+```{r various-analyses-5}
+# # Analyze session differences
+# arr3_4_ses_1_2_perf_congruent_1 = results_table_arr_3_4 %>%
+#         filter(congruency == 1) %>%
+#         select(phase_2_min_phase_1_ses_1_2_perf) %>%
+#         .[[1]]
+# arr3_4_ses_1_2_perf_congruent_0 = results_table_arr_3_4 %>%
+#         filter(congruency == 0) %>%
+#         select(phase_2_min_phase_1_ses_1_2_perf) %>%
+#         .[[1]]
+# 
+# arr3_4_bf_ses_1_2_perf <-
+#     reportBF(ttestBF(
+#         arr3_4_ses_1_2_perf_congruent_1,
+#         arr3_4_ses_1_2_perf_congruent_0,
+#         paired = FALSE
+#     ),
+#     4)
+# 
+# arr3_4_bf_ses_1_2_perf
+# 
+# # Normal t-test?
+# t.test(arr3_4_ses_1_2_perf_congruent_0,arr3_4_ses_1_2_perf_congruent_1,paired=FALSE)
+```
+The BF for t-test matches the congruency main effect reported by the Bayesian ANOVA.
+
+
+## Impact of the lower-left outlier
+
+### Bayesian ANOVA for phase 2 always having arr3
+
+```{r anova-bayes-for-arr3-in-phase2}
+
+# results_table_arr_3_in_phase_2 <- results_table_qc_pass_ptp_analyzed %>%
+#         filter(arr_phase_2_1 == 3)
+# 
+# bf_arr_3_in_phase_2 <- anovaBF(phase_2_min_phase_1_ses_1_2_perf~
+#                               congruency*
+#                               concept_phase_1, 
+#              data = results_table_arr_3_in_phase_2,
+#              whichModels="withmain",
+#              whichRandom = "ptp", iterations = 100000)
+# 
+# bf_arr_3_in_phase_2 <- sort(bf_arr_3_in_phase_2, decreasing = TRUE)
+# 
+# bf_arr_3_in_phase_2 %>% knitr::kable() %>%
+#         kable_styling(bootstrap_options = "striped")
+# 
+
+
+```
+
+### Bayesian t-test for arr3 always in phase 2
+
+```{r ttest-bayes-arr3_in_phase2}
+
+# # Analyze session differences
+# results_table_arr_3_in_phase_2_congruent_1 <- results_table_arr_3_in_phase_2 %>%
+#         filter(congruency == 1) %>%
+#         select(phase_2_min_phase_1_ses_1_2_perf) %>%
+#         .[[1]]
+#         
+# results_table_arr_3_in_phase_2_congruent_0 <- results_table_arr_3_in_phase_2 %>%
+#         filter(congruency == 0) %>%
+#         select(phase_2_min_phase_1_ses_1_2_perf) %>%
+#         .[[1]]
+# 
+# arr3_in_phase_2_bf_ses_1_2_perf <-
+#     reportBF(ttestBF(
+#         results_table_arr_3_in_phase_2_congruent_1,
+#         results_table_arr_3_in_phase_2_congruent_0,
+#         paired = FALSE
+#     ),
+#     4)
+# 
+# arr3_in_phase_2_bf_ses_1_2_perf
+# 
+# # Normal t-test?
+# t.test(results_table_arr_3_in_phase_2_congruent_0,results_table_arr_3_in_phase_2_congruent_1,paired=FALSE)
+```
+
+
