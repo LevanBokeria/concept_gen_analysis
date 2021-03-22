@@ -44,7 +44,7 @@ all_node_combs = combnk(all_nodes,3);
 %% %%%%%%% Conditions for the companion triangle %%%%%%%%
 
 % Which nodes to exclude
-exclude_nodes_base = [1,16];
+exclude_nodes_base = [1,2,5,6,16];
 % exclude_nodes_base = [1,16];
 
 % Which nodes to necessarily have?
@@ -60,13 +60,13 @@ can_share_dimension = 0;
 must_share_dimension = 0;
 
 % Must it have at least one target in the center?
-must_contain_center = 0;
+must_contain_center = 1;
 
 % Must it have at least one target on the edge?
 must_contain_edge = 0;
 
 % Must it NOT have any targets in the center?
-must_avoid_center = 1;
+must_avoid_center = 0;
 
 %% Condition relating to the source triangle
 

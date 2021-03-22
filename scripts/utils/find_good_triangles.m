@@ -10,7 +10,7 @@ home = pwd;
 [~,name,~] = fileparts(home);
 
 if ~strcmp('concept_gen_analysis',name)
-    error('please change working directory to ./con_learn/unified_space/');
+    error('please change working directory to ./concept_gen_analysis/');
 end
 
 addpath(genpath(home));
@@ -29,7 +29,7 @@ all_node_combs = combnk(all_nodes,3);
 
 % Which nodes to exclude
 % exclude_nodes = [1,4,13,16];
-exclude_nodes = [1,16];
+exclude_nodes = [1,2,6,5,16];
 
 % Which nodes to necessarily have?
 include_nodes = [];
@@ -44,13 +44,13 @@ can_share_dimension = 0;
 must_share_dimension = 0;
 
 % Must it have at least one target in the center?
-must_contain_center = 0;
+must_contain_center = 1;
 
 % Must it have at least one target on the edge?
 must_contain_edge = 0;
 
 % Must it NOT have any targets in the center?
-must_avoid_center = 1;
+must_avoid_center = 0;
 
 % Among the combinations that satisfy all the above, should we exclude
 % mirrored ones? So if one tr is a mirror of another across the 45 degree

@@ -154,6 +154,31 @@ TOSTtwo(m1 = m1, m2 = m2, sd1 = sd1, sd2 = sd2, n1 = n1, n2 = n2, low_eqbound_d 
 
 ```
 
+## Now compare outlier vs no outlier in phase 1, maybe those are reliably different? 
+
+```{r outlier-no-outlier-phase-1-difference}
+
+m1 <- results_table_qc_pass_ptp_analyzed %>% filter(phase_1_lower_left_outlier == TRUE) %>% 
+.[['phase_1_ses_1_2_perf']] %>% mean()
+m2 <- results_table_qc_pass_ptp_analyzed %>% filter(phase_1_lower_left_outlier == FALSE) %>% 
+.[['phase_1_ses_1_2_perf']] %>% mean()
+
+sd1 <- results_table_qc_pass_ptp_analyzed %>% filter(phase_1_lower_left_outlier == TRUE) %>% 
+.[['phase_1_ses_1_2_perf']] %>% sd()
+sd2 <- results_table_qc_pass_ptp_analyzed %>% filter(phase_1_lower_left_outlier == FALSE) %>% 
+.[['phase_1_ses_1_2_perf']] %>% sd()
+
+n1 <- results_table_qc_pass_ptp_analyzed %>% filter(phase_1_lower_left_outlier == TRUE) %>% 
+    nrow()
+n2 <- results_table_qc_pass_ptp_analyzed %>% filter(phase_1_lower_left_outlier == FALSE) %>% 
+    nrow()
+
+TOSTtwo(m1 = m1, m2 = m2, sd1 = sd1, sd2 = sd2, n1 = n1, n2 = n2, low_eqbound_d = -0.27, high_eqbound_d = 0.27)
+
+
+```
+
+
 # Frequentist ANOVA analysis
 
 
