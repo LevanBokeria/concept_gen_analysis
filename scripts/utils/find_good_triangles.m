@@ -15,9 +15,10 @@ end
 
 addpath(genpath(home));
 
-make_triangle_plots = 1;
-remove_node_labels  = 0;
-save_figures        = 0;
+make_triangle_plots      = 1;
+remove_node_labels       = 0;
+save_figures             = 0;
+find_companion_triangles = 1;
 
 [G,coordinate_matrix,unit_dist] = create_four_by_four_space;
 
@@ -38,10 +39,10 @@ include_nodes = [];
 min_cb_dist = 2;
 
 % Can two toys share a dimension?
-can_share_dimension = 0;
+can_share_dimension = 1;
 
 % Must two toys share a dimension?
-must_share_dimension = 0;
+must_share_dimension = 1;
 
 % Must it have at least one target in the center?
 must_contain_center = 1;
@@ -56,6 +57,20 @@ must_avoid_center = 0;
 % mirrored ones? So if one tr is a mirror of another across the 45 degree
 % line, shall we exclude that?
 exclude_mirror_triangles = 1;
+
+%% If we will also search for comparison triangles:
+% Arguments to pass that function, specifying relationship between the
+% source and companion triangles.
+
+% Can they share a node?
+must_avoid_same_nodes_with_source = 1;
+
+% Can they share a dimension?
+must_avoid_same_dimensions_with_source = 0;
+
+% If you take the nodes that are opposite of the source triangle nodes
+% across the 45 degree line, can those nodes be shared?
+must_avoid_mirrored_nodes_with_source = 1;
 %% %%%%%%%%%% Filter out the combinations %%%%%%%%%%%%%%%
 
 % Vector to signify which combs to filter
@@ -272,3 +287,14 @@ if save_figures
 end
 
 %% Find companion triangles for each? 
+
+if find_companion_triangles
+    
+    find_good_companions_for_triangles(source_triangles,...
+        exclude_nodes_base,include_nodes,min_cb_dist,can_share_dimension,...
+        must_share_dimension,must_contain_center,must_contain_edge,...
+        must_avoid_center,...
+        must_avoid_same_nodes_with_source,...
+        must_avoid_same_dimensions_with_source,...
+        must_avoid_mirrored_nodes_with_source)
+end

@@ -1,4 +1,10 @@
-function find_good_companions_for_triangles(source_triangles)
+function find_good_companions_for_triangles(source_triangles,...
+    exclude_nodes_base,include_nodes,min_cb_dist,can_share_dimension,...
+    must_share_dimension,must_contain_center,must_contain_edge,...
+    must_avoid_center,...
+    must_avoid_same_nodes_with_source,...
+    must_avoid_same_dimensions_with_source,...
+    must_avoid_mirrored_nodes_with_source)
 
 %% Description
 
@@ -26,11 +32,6 @@ end
 
 addpath(genpath(home));
 
-if (nargin < 1) 
-    source_triangles = [14,9,4];
-end
-
-
 make_triangle_plots = 1;
 remove_node_labels  = 0;
 save_figures        = 0;
@@ -42,43 +43,46 @@ all_nodes = 1:16;
 all_node_combs = combnk(all_nodes,3);
 
 %% %%%%%%% Conditions for the companion triangle %%%%%%%%
-
-% Which nodes to exclude
-exclude_nodes_base = [1,2,5,6,16];
-% exclude_nodes_base = [1,16];
-
-% Which nodes to necessarily have?
-include_nodes = [];
-
-% Minimum city block distance between elements
-min_cb_dist = 2;
-
-% Can two toys share a dimension?
-can_share_dimension = 0;
-
-% Must two toys share a dimension?
-must_share_dimension = 0;
-
-% Must it have at least one target in the center?
-must_contain_center = 1;
-
-% Must it have at least one target on the edge?
-must_contain_edge = 0;
-
-% Must it NOT have any targets in the center?
-must_avoid_center = 0;
-
-%% Condition relating to the source triangle
-
-% Can they share a node?
-must_avoid_same_nodes_with_source = 1;
-
-% Can they share a dimension?
-must_avoid_same_dimensions_with_source = 0;
-
-% If you take the nodes that are opposite of the source triangle nodes 
-% across the 45 degree line, can those nodes be shared?
-must_avoid_mirrored_nodes_with_source = 1;
+if (nargin < 1)
+    source_triangles = [14,9,4];
+    
+    % Which nodes to exclude
+    exclude_nodes_base = [1,2,5,6,16,4,13];
+    % exclude_nodes_base = [1,16];
+    
+    % Which nodes to necessarily have?
+    include_nodes = [];
+    
+    % Minimum city block distance between elements
+    min_cb_dist = 2;
+    
+    % Can two toys share a dimension?
+    can_share_dimension = 1;
+    
+    % Must two toys share a dimension?
+    must_share_dimension = 1;
+    
+    % Must it have at least one target in the center?
+    must_contain_center = 1;
+    
+    % Must it have at least one target on the edge?
+    must_contain_edge = 0;
+    
+    % Must it NOT have any targets in the center?
+    must_avoid_center = 0;
+    
+    %% Condition relating to the source triangle
+    
+    % Can they share a node?
+    must_avoid_same_nodes_with_source = 1;
+    
+    % Can they share a dimension?
+    must_avoid_same_dimensions_with_source = 0;
+    
+    % If you take the nodes that are opposite of the source triangle nodes
+    % across the 45 degree line, can those nodes be shared?
+    must_avoid_mirrored_nodes_with_source = 1;
+end
 
 %% Start looping through the given list of triangles
 
