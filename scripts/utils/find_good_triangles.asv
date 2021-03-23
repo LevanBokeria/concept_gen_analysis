@@ -207,11 +207,9 @@ if exclude_mirror_triangles
             
             % Make sure that this mirror is not identical with the
             % original. Sometimes, the original had itself as the mirror!
-            if ~isequal(filtered_combs_no_mirror(idx_to_remove,:), ...
-                    iComb)
-
-                filtered_combs_no_mirror(idx_to_remove,:) = [];
-            end
+            if 
+            
+            filtered_combs_no_mirror(idx_to_remove,:) = [];
         end
         
         

@@ -13,7 +13,7 @@ function find_good_companions_for_triangles(source_triangles)
 
 %% General setup
 dbstop if error;
-close all;
+% close all;
 
 % Check you're in the right directory
 home = pwd;
@@ -32,7 +32,7 @@ end
 
 
 make_triangle_plots = 1;
-remove_node_labels  = 1;
+remove_node_labels  = 0;
 save_figures        = 0;
 
 [G,coordinate_matrix,unit_dist] = create_four_by_four_space;
