@@ -1,0 +1,79 @@
+---
+title: "explore_durations"
+output: bookdown::html_document2
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r load-all-libraries, message=FALSE, warning=FALSE, results=FALSE}
+
+# Clean the environment
+rm(list=ls())
+
+# Load libraries
+library(tidyverse)
+library(readxl)
+library(ggpubr)
+library(rstatix)
+library(emmeans)
+library(BayesFactor)
+library(DT)
+library(kableExtra)
+library(assortedRFunctions)
+library(TOSTER)
+
+# Source other scripts
+source('./utils/load_transform_gather.R')
+
+```
+
+# Load and get the datasets ready
+
+```{r load-transform-gather-filter-qc}
+
+outList <- load_transform_gather()
+
+long_form_data_all_ptp <- 
+    outList$long_form_data_all_ptp
+
+long_form_data_qc_pass_ptp <- 
+    outList$long_form_data_qc_pass_ptp
+
+results_table_qc_pass_ptp_analyzed <- 
+    outList$results_table_qc_pass_ptp_analyzed
+results_table_qc_pass_ptp_analyzed_gathered <- 
+    outList$results_table_qc_pass_ptp_analyzed_gathered
+
+rm(outList)
+
+```
+
+# How many sessions did people take to reach the criterion?
+
+```{r n-sessions-to-crit}
+
+n_sess_to_crit <- long_form_data_qc_pass_ptp %>%
+    group_by(phase,ptp) %>%
+    select(session) %>%
+    arrange(desc(session)) %>% 
+    slice(1) %>%
+    ungroup()
+
+
+# Now plot
+
+n_sess_to_crit %>%
+    mutate(phase=as.factor(phase)) %>%
+    ggplot(aes(x=phase,y=session)) +
+    # geom_boxplot(width=0.3,notch = FALSE) + 
+    geom_violin() + 
+        # geom_jitter(width=0.1) + 
+        # geom_dotplot(binaxis='y', stackdir='center',
+        #              stackratio=1, dotsize=0.5, fill="black") +        
+     geom_point(pch=21) +
+        stat_summary(fun=mean, geom="point", shape=20, size=5, color="red", fill="red")
+
+```
+
