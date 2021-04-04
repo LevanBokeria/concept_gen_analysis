@@ -62,7 +62,7 @@ n_sess_to_crit <- long_form_data_qc_pass_ptp %>%
     ungroup()
 
 
-# Now plot
+# Now plot violin
 
 n_sess_to_crit %>%
     mutate(phase=as.factor(phase)) %>%
@@ -72,8 +72,17 @@ n_sess_to_crit %>%
         # geom_jitter(width=0.1) + 
         # geom_dotplot(binaxis='y', stackdir='center',
         #              stackratio=1, dotsize=0.5, fill="black") +        
-     geom_point(pch=21) +
-        stat_summary(fun=mean, geom="point", shape=20, size=5, color="red", fill="red")
+        stat_summary(fun=mean, geom="point", shape=20, size=5, color="red", fill="red") +
+        stat_summary(fun=median, geom="point", shape=23, size=5, color="green", fill="green")
+    
+
+# Plot histogram
+n_sess_to_crit %>%
+    filter(phase==1) %>%
+    ggplot(aes(x=session)) +
+    geom_bar() + 
+    xlab('Sessions to criterium') + 
+    ylab('Count participants')
 
 ```
 
