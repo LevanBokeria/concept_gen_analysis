@@ -3,26 +3,34 @@
 
 load_transform_gather <- function(){
         
+        # Load libraries
+        if (!('tidyverse' %in% (.packages()))){
+               library(tidyverse) 
+        }
+        if (!('readxl' %in% (.packages()))){
+                library(readxl)
+        }        
+        
         # Source various scripts
         source('./utils/mutate_results_table_columns.R')
         source('./utils/get_only_qc_pass.R')
         source('./utils/basic_checks.R')
         
         # Read the excel files
-        results_table_qc_pass_ptp_analyzed <-
-                read_excel(
-                        'C:/Users/levan/GitHub/concept_gen_analysis/results/analysis/results_table_qc_pass_ptp_analyzed.xlsx'
-                ) %>%
+        results_table_qc_pass_ptp_analyzed <- read_excel(
+                'C:/Users/levan/GitHub/concept_gen_analysis/results/analysis/results_table_qc_pass_ptp_analyzed.xlsx') %>%
                 as_tibble()
         
-        long_form_data_all_ptp <-
-                read_excel(
-                        'C:/Users/levan/GitHub/concept_gen_analysis/results/analysis/long_form_data_all_ptp.xlsx'
-                        ,
-                        sheet = 1
-                ) %>%
+        long_form_data_all_ptp <- read_excel(
+                'C:/Users/levan/GitHub/concept_gen_analysis/results/analysis/long_form_data_all_ptp.xlsx',
+                sheet = 1) %>%
                 as_tibble()
         
+        prolific_meta_data <- 
+                read_excel(
+                r'(C:\Users\levan\GitHub\concept_gen_analysis\data\prolific_meta_data\united_meta_data.xlsx)',
+                sheet = 1) %>%
+                as_tibble()
         
         # Basic checks
         basic_checks(long_form_data_all_ptp)
@@ -30,8 +38,6 @@ load_transform_gather <- function(){
         # Transform columns to factors and add new columns
         results_table_qc_pass_ptp_analyzed <- results_table_qc_pass_ptp_analyzed %>%
                 mutate_results_table_columns()
-        
-        mutate_results_table_columns(long_form_data_all_ptp)
         
         long_form_data_all_ptp <- long_form_data_all_ptp %>%
                 mutate_results_table_columns()

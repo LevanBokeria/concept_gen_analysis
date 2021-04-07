@@ -61,7 +61,7 @@ results_table_qc_pass_ptp_analyzed %>%
         ggplot(aes(x=congruency,
                    y=phase_2_min_phase_1_ses_1_2_perf,
                    fill=congruency)) + 
-        geom_boxplot(width=0.5,notch = TRUE,outlier.shape = NA) + 
+        geom_boxplot(width=0.2,notch = TRUE,outlier.shape = NA) + 
         # geom_point(pch=21,
         #            position = position_jitterdodge(dodge.width=0.5,
         #                                            jitter.width=0.1)) +
@@ -71,7 +71,7 @@ results_table_qc_pass_ptp_analyzed %>%
         ylab("Plase 2 - Phase 1") + 
         theme(axis.text.x = element_text(size=10),
               axis.text.y = element_text(size=10)) +
-        scale_x_discrete(labels=c('Incongruenct','Congruent')) +
+        scale_x_discrete(labels=c('Incongruent','Congruent')) +
         scale_fill_manual(values=c('#e5f5f9','#2ca25f')) + 
         theme(legend.position="none",
               axis.title.x=element_blank())
@@ -146,7 +146,7 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
         scale_fill_manual(values=c('#045a8d','#d0d1e6'),
                           name=element_blank(),
                           labels=c('Phase 1','Phase 2')) + 
-        scale_x_discrete(labels=c('Incongruenct','Congruent'))
+        scale_x_discrete(labels=c('Incongruent','Congruent'))
 
 # Basic summary table
 results_table_qc_pass_ptp_analyzed_gathered %>%
@@ -175,7 +175,7 @@ results_table_qc_pass_ptp_analyzed %>%
         ylab("Plase 2 - Phase 1") + 
         theme(axis.text.x = element_text(size=10),
               axis.text.y = element_text(size=10)) +
-        scale_x_discrete(labels=c('Incongruenct','Congruent')) +
+        scale_x_discrete(labels=c('Incongruent','Congruent')) +
         scale_fill_manual(values=c('#e5f5f9','#2ca25f')) + 
         theme(legend.position="none",
               axis.title.x=element_blank()) + 
@@ -206,7 +206,7 @@ data_arr_2_c0 <- results_table_qc_pass_ptp_analyzed %>%
     filter(arr_phase_1_1 == 14 & congruency == 0) %>%
     select(phase_2_min_phase_1_ses_1_2_perf) %>% .[[1]]
 
-# Run the bayesian analysis for order of concepts
+# Run the bayesian analysis
 
 BF_arr_1_first <- ttestBF(
     data_arr_1_c1,data_arr_1_c0,    
@@ -240,7 +240,7 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
         scale_fill_manual(values=c('#045a8d','#d0d1e6'),
                           name=element_blank(),
                           labels=c('Phase 1','Phase 2')) + 
-        scale_x_discrete(labels=c('Incongruenct','Congruent')) + 
+        scale_x_discrete(labels=c('Incongruent','Congruent')) + 
         facet_wrap(~arr_phase_1_1,
                    labeller = labeller(arr_phase_1_1 = c("1" = "Start with Arr1",
                                                  "14" = "Start with Arr2")))
@@ -304,7 +304,7 @@ results_table_qc_pass_ptp_analyzed %>%
         ggplot(aes(x=congruency,
                    y=phase_2_min_phase_1_ses_1_2_perf,
                    fill=congruency)) + 
-        geom_boxplot(width=0.5,notch = TRUE,outlier.shape = NA) + 
+        geom_boxplot(width=0.3,notch = TRUE,outlier.shape = NA) + 
         # geom_point(pch=21,
         #            position = position_jitterdodge(dodge.width=0.5,
         #                                            jitter.width=0.1)) +
@@ -314,7 +314,7 @@ results_table_qc_pass_ptp_analyzed %>%
         ylab("Plase 2 - Phase 1") + 
         theme(axis.text.x = element_text(size=10),
               axis.text.y = element_text(size=10)) +
-        scale_x_discrete(labels=c('Incongruenct','Congruent')) +
+        scale_x_discrete(labels=c('Incongruent','Congruent')) +
         scale_fill_manual(values=c('#e5f5f9','#2ca25f')) + 
         theme(legend.position="none",
               axis.title.x=element_blank())
@@ -349,7 +349,9 @@ bf_ses_1_2_perf_arr_3_4 <-
     4)
 
 # Basic t-test
-t.test(ses_1_2_perf_congruent_0,ses_1_2_perf_congruent_1,paired=FALSE)
+t.test(ses_1_2_perf_congruent_0_arr_3_4,
+       ses_1_2_perf_congruent_1_arr_3_4,
+       paired=FALSE)
 
 # Effect size for the session differences
 sd_c1 <- sd(ses_1_2_perf_congruent_1_arr_3_4)
@@ -389,7 +391,7 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
         scale_fill_manual(values=c('#045a8d','#d0d1e6'),
                           name=element_blank(),
                           labels=c('Phase 1','Phase 2')) + 
-        scale_x_discrete(labels=c('Incongruenct','Congruent'))
+        scale_x_discrete(labels=c('Incongruent','Congruent'))
 
 # Basic summary table
 results_table_qc_pass_ptp_analyzed_gathered %>%
@@ -419,7 +421,7 @@ results_table_qc_pass_ptp_analyzed %>%
         ylab("Plase 2 - Phase 1") + 
         theme(axis.text.x = element_text(size=10),
               axis.text.y = element_text(size=10)) +
-        scale_x_discrete(labels=c('Incongruenct','Congruent')) +
+        scale_x_discrete(labels=c('Incongruent','Congruent')) +
         scale_fill_manual(values=c('#e5f5f9','#2ca25f')) + 
         theme(legend.position="none",
               axis.title.x=element_blank()) + 
@@ -430,7 +432,7 @@ results_table_qc_pass_ptp_analyzed %>%
 # Basic summary table
 results_table_qc_pass_ptp_analyzed %>%
         filter(arrangement_pairs == 'arr_3_4') %>%
-        group_by(arr_phase_1_1,congruency) %>%
+        group_by(congruency,arr_phase_1_1) %>%
         get_summary_stats(phase_2_min_phase_1_ses_1_2_perf, type = 'mean_sd') %>%
         knitr::kable() %>%
         kable_styling(bootstrap_options = "striped")
@@ -450,13 +452,13 @@ data_arr_4_c0 <- results_table_qc_pass_ptp_analyzed %>%
     filter(arr_phase_1_1 == 15 & congruency == 0) %>%
     select(phase_2_min_phase_1_ses_1_2_perf) %>% .[[1]]
 
-# Run the bayesian analysis for order of concepts
-
-BF_arr_1_first <- ttestBF(
-    data_arr_3_c1,data_arr_3_c0,    
+# Run the bayesian analysis
+BF_arr_3_first <- ttestBF(
+    data_arr_3_c1,
+    data_arr_3_c0,    
     paired = FALSE
 ) %>% reportBF(4)
-BF_arr_2_first <- ttestBF(
+BF_arr_4_first <- ttestBF(
     data_arr_4_c1,
     data_arr_4_c0,    
     paired = FALSE
@@ -484,14 +486,14 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
         scale_fill_manual(values=c('#045a8d','#d0d1e6'),
                           name=element_blank(),
                           labels=c('Phase 1','Phase 2')) + 
-        scale_x_discrete(labels=c('Incongruenct','Congruent')) + 
+        scale_x_discrete(labels=c('Incongruent','Congruent')) + 
         facet_wrap(~arr_phase_1_1,
                    labeller = labeller(arr_phase_1_1 = c("3" = "Start with Arr3",
                                                  "15" = "Start with Arr4")))
 
 # Basic summary table
 results_table_qc_pass_ptp_analyzed_gathered %>%
-        group_by(arrangement_pairs,congruency,phase) %>%
+        group_by(congruency,phase,arr_phase_1_1) %>%
         get_summary_stats(ses_1_2_perf, type = 'mean_sd') %>%
         knitr::kable() %>%
         kable_styling(bootstrap_options = "striped")
@@ -535,6 +537,8 @@ long_form_data_qc_pass_ptp %>%
         
 
 ```
+
+
 
 
 ## Plot phase 1 and phase 2 separately, collapsed for arr1-2 and arr3-4
