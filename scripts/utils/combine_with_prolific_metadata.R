@@ -42,7 +42,7 @@ combine_with_prolific_metadata = function(dataIn,prolific_meta_data){
         # Find that person in the dataIn, and add the columns. 
         
         # Find the start date/time for each participant in the results table
-        for (i in seq(1,nrow(prolific_meta_data))) {
+        for (i in seq(53,nrow(prolific_meta_data))) {
                 
                 curr_ptp <- prolific_meta_data$participant_id[i]
                 

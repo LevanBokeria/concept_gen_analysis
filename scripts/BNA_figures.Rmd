@@ -539,34 +539,6 @@ long_form_data_qc_pass_ptp %>%
 ```
 
 
-
-
-## Plot phase 1 and phase 2 separately, collapsed for arr1-2 and arr3-4
-
-```{r phases-separately-arrangement-pairs}
-results_table_qc_pass_ptp_analyzed_gathered %>% 
-        ggplot(aes(x=congruency,y=ses_1_2_perf,fill=phase)) +
-        geom_boxplot(width=0.5,notch=TRUE) + 
-        geom_point(pch=21,
-                   position = position_jitterdodge(dodge.width=0.5,
-                                                   jitter.width=0.1)) +
-        # stat_summary(fun=mean, geom="point", shape=20, 
-        #              size=5, color="red", fill="red") +
-        ylab("ses 1&2 acc") + 
-        theme(axis.text.x = element_text(size=14),
-              axis.text.y = element_text(size=14)) + 
-        scale_fill_manual(values=c('#045a8d','#d0d1e6')) + 
-        facet_wrap(~arrangement_pairs) + 
-        theme(legend.position="top")
-
-# Basic summary table
-results_table_qc_pass_ptp_analyzed_gathered %>%
-        group_by(arrangement_pairs,congruency,phase) %>%
-        get_summary_stats(ses_1_2_perf, type = 'mean_sd') %>%
-        knitr::kable() %>%
-        kable_styling(bootstrap_options = "striped")
-```
-
 ## Plot phase 1 and phase 2 separately, separately for each arrangement
 
 ```{r phases-separately-arrangements, fig.width = 10}
@@ -574,57 +546,35 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
 results_table_qc_pass_ptp_analyzed_gathered %>% 
         reorder_levels(arr_phase_1_1, order = c("1", "14", "3", "15")) %>%
         ggplot(aes(x=congruency,y=ses_1_2_perf,fill=phase)) +
-        geom_boxplot(width=0.5,notch=FALSE) + 
+        geom_boxplot(width=0.5,notch=FALSE,outlier.shape = NA) + 
         geom_point(pch=21,
                    position = position_jitterdodge(dodge.width=0.5,
                                                    jitter.width=0.1)) +
         # stat_summary(fun=mean, geom="point", shape=20, 
         #              size=5, color="red", fill="red") +
         ylab("ses 1&2 acc") + 
-        theme(axis.text.x = element_text(size=14),
-              axis.text.y = element_text(size=14)) + 
-        scale_fill_manual(values=c('#045a8d','#d0d1e6')) + 
+        xlab('') +
+        theme(axis.text.x = element_text(size=10),
+              axis.text.y = element_text(size=10)) + 
+        scale_fill_manual(values=c('#045a8d','#d0d1e6'),
+                          name=element_blank(),
+                          labels=c('Phase 1','Phase 2')) + 
         facet_wrap(~arr_phase_1_1, ncol = 4,
                    labeller = labeller(arr_phase_1_1 = c("1" = "Arr1",
                                                          "14" = "Arr2",
                                                          "3" = "Arr3",
                                                          "15" = "Arr4"))) +        
-        theme(legend.position="top")
+        theme(legend.position="top") + 
+        scale_x_discrete(labels=c('Incongruent','Congruent')) + 
+        ylab("Percent correct in sessions 1&2")
+
+
 
 # Basic summary table
 results_table_qc_pass_ptp_analyzed_gathered %>%
         reorder_levels(arr_phase_1_1, order = c("1", "14", "3", "15")) %>%
         group_by(arr_phase_1_1,congruency,phase) %>%
         get_summary_stats(ses_1_2_perf, type = 'mean_sd') %>%
-        knitr::kable() %>%
-        kable_styling(bootstrap_options = "striped")
-
-```
-
-
-## Plot the basic congruency effect of Phase 2-1, Congruent vs Incongruent
-
-```{r congruency-by-arrangement-pairs}
-results_table_qc_pass_ptp_analyzed %>%
-        ggplot(aes(x=arrangement_pairs,y=phase_2_min_phase_1_ses_1_2_perf,
-                   fill=congruency)) + 
-        geom_boxplot(width=0.5,notch = TRUE) + 
-        # geom_dotplot(binaxis='y', stackdir='center',
-        #              stackratio=1, dotsize=0.5, fill="black",
-        #              position = position_jitterdodge(dodge.width=0.5,
-        #                                              jitter.width=0.1)) +        
-        geom_point(pch=21,
-                   position = position_jitterdodge(dodge.width=0.5,
-                                                   jitter.width=0.1)) +
-        ylab("P2-P1, ses 1&2 acc") + 
-        theme(axis.text.x = element_text(size=14),
-              axis.text.y = element_text(size=14)) + 
-        scale_fill_manual(values=c('#e5f5f9','#2ca25f'))
-
-# Basic summary table
-results_table_qc_pass_ptp_analyzed %>%
-        group_by(arrangement_pairs,congruency) %>%
-        get_summary_stats(phase_2_min_phase_1_ses_1_2_perf, type = 'mean_sd') %>%
         knitr::kable() %>%
         kable_styling(bootstrap_options = "striped")
 
@@ -647,7 +597,8 @@ results_table_qc_pass_ptp_analyzed %>%
         scale_x_discrete(labels=c('Arr1','Arr2','Arr3','Arr4')) +
         theme(axis.text.x = element_text(size=14),
               axis.text.y = element_text(size=14)) + 
-        scale_fill_manual(values=c('#e5f5f9','#2ca25f'))
+        scale_fill_manual(values=c('#e5f5f9','#2ca25f')) + 
+        xlab('Phase 1 arrangement')
 
 # Basic summary table
 results_table_qc_pass_ptp_analyzed %>%
@@ -658,110 +609,125 @@ results_table_qc_pass_ptp_analyzed %>%
         kable_styling(bootstrap_options = "striped")
 
 ```
+# Looking at the difference between concept order?
 
-## Look at individual targets in the space. (only Incongruent condition)
+```{r phases-separately-concepts, fig.width = 10}
 
-Here I plot only incongruent participant data, separate plot for phase 1 and phase 2.
-I break it up by which arrangement they had in phase 1. Because of thise, when the x legend of Phase 2 plot says "Arr1" that means Arr1 was seen in phase 1, but Arr2 was seen in phase 2. Thats a bit confusing, sorry. 
+results_table_qc_pass_ptp_analyzed_gathered %>% 
+        ggplot(aes(x=congruency,y=ses_1_2_perf,fill=phase)) +
+        geom_boxplot(width=0.5,notch=FALSE,outlier.shape = NA) + 
+        geom_point(pch=21,
+                   position = position_jitterdodge(dodge.width=0.5,
+                                                   jitter.width=0.1)) +
+        # xlab('') +
+        theme(axis.text.x = element_text(size=10),
+              axis.text.y = element_text(size=10)) + 
+        scale_fill_manual(values=c('#045a8d','#d0d1e6'),
+                          name=element_blank(),
+                          labels=c('Phase 1','Phase 2')) + 
+        facet_wrap(~concept_phase_1) +
+        theme(legend.position="top") + 
+        # scale_x_discrete(labels=c('Incongruent','Congruent')) + 
+        ylab("Percent correct in sessions 1&2")
 
-The point of this is to see how the performance varied based on individual target, so see if some particular target was driving congruency or masking incongruency cost by being too easy to learn in phase 2.
+# Plot just the BT, diff arrangmenets
+results_table_qc_pass_ptp_analyzed_gathered %>% 
+        filter(concept_phase_1 == 'beak_tail_space') %>%
+        reorder_levels(arr_phase_1_1, order = c("1", "14", "3", "15")) %>%
+        ggplot(aes(x=congruency,y=ses_1_2_perf,fill=phase)) +
+        geom_boxplot(width=0.5,notch=FALSE,outlier.shape = NA) + 
+        geom_point(pch=21,
+                   position = position_jitterdodge(dodge.width=0.5,
+                                                   jitter.width=0.1)) +
+        # stat_summary(fun=mean, geom="point", shape=20, 
+        #              size=5, color="red", fill="red") +
+        ylab("ses 1&2 acc") + 
+        xlab('') +
+        theme(axis.text.x = element_text(size=10),
+              axis.text.y = element_text(size=10)) + 
+        scale_fill_manual(values=c('#045a8d','#d0d1e6'),
+                          name=element_blank(),
+                          labels=c('Phase 1','Phase 2')) + 
+        facet_wrap(~arr_phase_1_1, ncol = 4,
+                   labeller = labeller(arr_phase_1_1 = c("1" = "Arr1",
+                                                         "14" = "Arr2",
+                                                         "3" = "Arr3",
+                                                         "15" = "Arr4"))) +        
+        theme(legend.position="top") + 
+        scale_x_discrete(labels=c('Incongruent','Congruent')) + 
+        ylab("Percent correct in sessions 1&2") + 
+        ggtitle('Beak Tail Space') + 
+        coord_cartesian(ylim=(c(0.5,1.0)))
 
-```{r individual-targets-incongruent, fig.height = 5, fig.width = 10}
-
-# Filter to have only sessions 1-2, only incongruent, phase, arrangement, and the target that was the prompt for the trial
-
-long_form_data_qc_pass_ptp %>%
-        filter((session == 1 | session == 2) & congruency == 0) %>%
-        select(congruency,arr_phase_1_1,concept_phase_1,ptp,
-               phase,session,prompt_img_name,correct) %>%
-        reorder_levels(prompt_img_name, 
-                       order = c("Sledge", "Gingerman", "Bear")) %>%
-        reorder_levels(arr_phase_1_1,
-                       order = c('1','14','3','15')) %>%
-        group_by(arr_phase_1_1,ptp,phase,prompt_img_name) %>%
-        summarize(avg_correct = mean(correct, na.rm = TRUE)) %>%
-        # View()
-        ggplot(aes(x=arr_phase_1_1,fill=prompt_img_name, y=avg_correct)) +
-        geom_violin() +
-        stat_summary(fun=mean, geom="point", shape=19, size=2, position=position_dodge(0.9)) +
-        stat_summary(fun=median, geom="point", shape=6, size=2, position=position_dodge(0.9)) +
-        # geom_boxplot(width=0.5,color="black", alpha=0.2) +
-        # geom_point(position = position_jitterdodge(dodge.width=0.5,
-        #                                 jitter.width=0.2),
-        #            alpha=0.3) + 
-        facet_wrap(~phase, labeller =
-                           labeller(phase = c("1" = "Phase 1","2" = "Phase 2"))) +
-        theme(
-                legend.position="top",
-                plot.title = element_text(size=11)
-                ) + 
-        scale_x_discrete(labels=c('Arr1','Arr2','Arr3','Arr4'))
+# Plot just the NL, diff arrangmenets
+results_table_qc_pass_ptp_analyzed_gathered %>% 
+        filter(concept_phase_1 == 'neck_legs_space') %>%
+        reorder_levels(arr_phase_1_1, order = c("1", "14", "3", "15")) %>%
+        ggplot(aes(x=congruency,y=ses_1_2_perf,fill=phase)) +
+        geom_boxplot(width=0.5,notch=FALSE,outlier.shape = NA) + 
+        geom_point(pch=21,
+                   position = position_jitterdodge(dodge.width=0.5,
+                                                   jitter.width=0.1)) +
+        # stat_summary(fun=mean, geom="point", shape=20, 
+        #              size=5, color="red", fill="red") +
+        ylab("ses 1&2 acc") + 
+        xlab('') +
+        theme(axis.text.x = element_text(size=10),
+              axis.text.y = element_text(size=10)) + 
+        scale_fill_manual(values=c('#045a8d','#d0d1e6'),
+                          name=element_blank(),
+                          labels=c('Phase 1','Phase 2')) + 
+        facet_wrap(~arr_phase_1_1, ncol = 4,
+                   labeller = labeller(arr_phase_1_1 = c("1" = "Arr1",
+                                                         "14" = "Arr2",
+                                                         "3" = "Arr3",
+                                                         "15" = "Arr4"))) +        
+        theme(legend.position="top") + 
+        scale_x_discrete(labels=c('Incongruent','Congruent')) + 
+        ylab("Percent correct in sessions 1&2") + 
+        ggtitle('Neck Legs Space') + 
+        coord_cartesian(ylim=(c(0.5,1.0)))
 
 
+
+# Basic summary table
+# results_table_qc_pass_ptp_analyzed_gathered %>%
+#         reorder_levels(arr_phase_1_1, order = c("1", "14", "3", "15")) %>%
+#         group_by(arr_phase_1_1,congruency,phase) %>%
+#         get_summary_stats(ses_1_2_perf, type = 'mean_sd') %>%
+#         knitr::kable() %>%
+#         kable_styling(bootstrap_options = "striped")
 
 ```
+```{r phase-1-concept-diff-by-arrangement, fig.width=15}
 
 
-As a reminder, these are our arrangements:
+# Just phase 1 data for sessions 1 and 2, by arrangement order
+results_table_qc_pass_ptp_analyzed %>%
+        ggplot(aes(x=arr_phase_1_1,y=phase_1_ses_1_2_perf,fill=concept_phase_1)) + 
+        geom_boxplot(width=0.5,outlier.shape = NA) + 
+        # geom_dotplot(binaxis='y', stackdir='center',
+        #              stackratio=1, dotsize=0.5, fill="black") +
+        geom_point(pch=21,
+                   position = position_jitterdodge(dodge.width=0.5,
+                                                   jitter.width=0.1)) +    
+        # stat_summary(fun=mean, geom="point", shape=20, size=5, color="red", fill="red") +
+        ylab("Phase 1, ses 1&2 acc") + 
+        # xlab('Arrangement for Phase 1') + 
+        # scale_x_discrete(labels=c('Arr1','Arr2','Arr3','Arr4')) +
+        # coord_cartesian(ylim=(c(0.8,0.9))) +
+        theme(axis.text.x = element_text(size=14),
+              axis.text.y = element_text(size=14)) +
+        facet_wrap(~congruency)
+        # ggtitle("Phase 1 scores, Arrangement Order")
 
-```{r our-four-arrangements}
-knitr::include_graphics("C:/Users/levan/GitHub/concept_gen_analysis/doc/miscellaneous/arrangements.png")
-```
 
-
-Looking at Phase 1:
-
-- Arr1: sledge does best, since its lower left corner stimulus
-- Arr2: Bear does best, its the upper left corner stimulus.
-- Arr3: Sledge does best, not sure why.
-- Arr4: Sledge does best, not sure why. 
-
-Looking at Phase 2:
-
-- Arr1 (so its Arr2 in Phase 2): again, Bear does best, its upper left corner simulus.
-- Arr2 (so Arr1 for Phase 2): again, Sledge does best, lower left corner.
-- Arr3 (so Arr4 for Phase 2): no difference, one would expect Gingerman to stand out since its the outlier lower left stimulus for arr4. 
-- Arr4 (so Arr3 for Phase 2): Bear does best maybe? It is the outlier, lower right corner stimulus for arr3.
-
-So, for arr1 and arr2, it does seem like the outlier sledge masked the costs of incongruency.
-But for arr3 and arr4, its not so clear cut. No single target stands out. Rather, seems like arr4 is just easier than arr3 when its in phase 2.
-
-## Look at individual targets in the space. (only Congruent condition)
-
-Just in case, see the plots for the congruent case, collapsed across the two phases.
-
-```{r individual-targets-congruent, fig.height = 5, fig.width = 10}
-
-# Filter to have only sessions 1-2, only incongruent, phase, arrangement, and the target that was the prompt for the trial
-
-long_form_data_qc_pass_ptp %>%
-        filter((session == 1 | session == 2) & 
-                       congruency == 1) %>%
-        select(congruency,arr_phase_1_1,concept_phase_1,ptp,
-               phase,session,prompt_img_name,correct) %>%
-        reorder_levels(prompt_img_name, 
-                       order = c("Sledge", "Gingerman", "Bear")) %>%
-        reorder_levels(arr_phase_1_1, 
-                       order = c('1','14','3','15')) %>%        
-        group_by(arr_phase_1_1,ptp,phase,prompt_img_name) %>%
-        summarize(avg_correct = mean(correct, na.rm = TRUE)) %>%
-        # View()
-        ggplot(aes(x=arr_phase_1_1,fill=prompt_img_name, y=avg_correct)) +
-        geom_violin() + 
-        stat_summary(fun=mean, geom="point", shape=19, size=2, position=position_dodge(0.9)) + 
-        stat_summary(fun=median, geom="point", shape=6, size=2, position=position_dodge(0.9)) + 
-        # geom_boxplot(width=0.5,color="black", alpha=0.2) +
-        # geom_point(position = position_jitterdodge(dodge.width=0.5,
-        #                                 jitter.width=0.2),
-        #            alpha=0.3) + 
-        # facet_wrap(~phase, labeller = 
-        #                    labeller(phase = c("1" = "Phase 1","2" = "Phase 2"))) + 
-        theme(
-                legend.position="top",
-                plot.title = element_text(size=11)
-                ) + 
-        scale_x_discrete(labels=c('Arr1','Arr2','Arr3','Arr4'))
-
+# Basic summary table
+results_table_qc_pass_ptp_analyzed %>%
+        group_by(congruency,arr_phase_1_1,concept_phase_1) %>%
+        get_summary_stats(phase_1_ses_1_2_perf, type = 'median') %>%
+        knitr::kable() %>%
+        kable_styling(bootstrap_options = "striped")
 
 
 ```

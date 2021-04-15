@@ -51,6 +51,7 @@ load_transform_gather <- function(){
         results_table_qc_pass_ptp_analyzed_gathered <- 
                 results_table_qc_pass_ptp_analyzed %>%
                 select(ptp,congruency,arrangement_pairs,arr_phase_1_1,arr_phase_2_1,
+                       concept_phase_1,concept_phase_2,
                        phase_1_ses_1_2_perf,phase_2_ses_1_2_perf,
                        phase_1_lower_left_outlier,phase_2_lower_left_outlier) %>%
                 gather(key='phase',value='ses_1_2_perf',
