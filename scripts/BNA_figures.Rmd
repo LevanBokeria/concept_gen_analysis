@@ -627,8 +627,27 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
                           labels=c('Phase 1','Phase 2')) + 
         facet_wrap(~concept_phase_1) +
         theme(legend.position="top") + 
-        # scale_x_discrete(labels=c('Incongruent','Congruent')) + 
+        scale_x_discrete(labels=c('Incongruent','Congruent')) +
         ylab("Percent correct in sessions 1&2")
+
+# Grid display, showing experiment by concept order
+results_table_qc_pass_ptp_analyzed_gathered %>% 
+        ggplot(aes(x=congruency,y=ses_1_2_perf,fill=phase)) +
+        geom_boxplot(width=0.5,notch=FALSE,outlier.shape = NA) + 
+        geom_point(pch=21,
+                   position = position_jitterdodge(dodge.width=0.5,
+                                                   jitter.width=0.1)) +
+        # xlab('') +
+        theme(axis.text.x = element_text(size=10),
+              axis.text.y = element_text(size=10)) + 
+        scale_fill_manual(values=c('#045a8d','#d0d1e6'),
+                          name=element_blank(),
+                          labels=c('Phase 1','Phase 2')) + 
+        theme(legend.position="top") + 
+        scale_x_discrete(labels=c('Incongruent','Congruent')) +
+        ylab("Percent correct in sessions 1&2") + 
+        facet_grid(arrangement_pairs ~ concept_phase_1)
+
 
 # Plot just the BT, diff arrangmenets
 results_table_qc_pass_ptp_analyzed_gathered %>% 
@@ -699,6 +718,67 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
 #         kable_styling(bootstrap_options = "striped")
 
 ```
+
+```{r grid-concept-order-arrangement, fig.width=10, fig.height=10}
+
+# Grid display, showing arr_phase_1_1 by concept order
+results_table_qc_pass_ptp_analyzed_gathered %>% 
+        ggplot(aes(x=congruency,y=ses_1_2_perf,fill=phase)) +
+        geom_boxplot(width=0.5,notch=FALSE,outlier.shape = NA) + 
+        geom_point(pch=21,
+                   position = position_jitterdodge(dodge.width=0.5,
+                                                   jitter.width=0.05)) +
+        # xlab('') +
+        theme(axis.text.x = element_text(size=10),
+              axis.text.y = element_text(size=10)) + 
+        scale_fill_manual(values=c('#045a8d','#d0d1e6'),
+                          name=element_blank(),
+                          labels=c('Phase 1','Phase 2')) + 
+        theme(legend.position="top") + 
+        scale_x_discrete(labels=c('Incongruent','Congruent')) +
+        ylab("Percent correct in sessions 1&2") + 
+        facet_grid(arr_phase_1_1 ~ concept_phase_1)
+
+```
+## Look at performance for individual toys brokend down by concept order INCOMPLETE
+
+```{r individual-targets-incongruent-expt-1-concept-order, fig.height = 5, fig.width = 10}
+
+# Filter to have only sessions 1-2, only incongruent, phase, arrangement, and the target that was the prompt for the trial
+
+long_form_data_qc_pass_ptp %>%
+        filter(arrangement_pairs == 'arr_1_2' & 
+                   (session == 1 | session == 2) & 
+                   congruency == 0) %>%
+        select(congruency,arr_phase_1_1,arr_phase_2_1,
+               current_arrangement,concept_phase_1,ptp,
+               phase,session,prompt_img_name,correct) %>%
+        reorder_levels(prompt_img_name, 
+                       order = c("Sledge", "Gingerman", "Bear")) %>%
+        reorder_levels(current_arrangement,
+                       order = c('3','15')) %>%
+        group_by(concept_phase_1,current_arrangement,ptp,phase,prompt_img_name) %>%
+        summarize(avg_correct = mean(correct, na.rm = TRUE)) %>%
+        ggplot(aes(x=current_arrangement,fill=prompt_img_name, y=avg_correct)) +
+        geom_violin() +
+        stat_summary(fun=mean, geom="point", shape=19, size=2, 
+                     position=position_dodge(0.9)) +
+        stat_summary(fun=median, geom="point", shape=6, size=2, position=position_dodge(0.9)) +
+        theme(
+                legend.position="top",
+                legend.title=element_blank(),
+                plot.title = element_text(size=11),
+                axis.title.x=element_blank()
+                ) + 
+        # scale_x_discrete(labels=c('Arr3','Arr4')) +
+        ylab('% Correct Sessions 1&2') + 
+        facet_wrap(~phase) 
+        
+
+```
+
+
+
 ```{r phase-1-concept-diff-by-arrangement, fig.width=15}
 
 
