@@ -133,16 +133,27 @@ end
 %% Save everything in a separate file
 idx_rows = find(~isnan(results_table_all_ptp.other_file_row_idx));
 
-entered_real_prolific_id = results_table_all_ptp(idx_rows,...
+entered_real_prolific_ids = results_table_all_ptp(idx_rows,...
     {'ptp','other_file_row_idx'});
 
 real_prolific_id = prolific_meta_data.participant_id(...
-    entered_real_prolific_id.other_file_row_idx);
+    entered_real_prolific_ids.other_file_row_idx);
 
-entered_real_prolific_id = addvars(entered_real_prolific_id,...
+entered_real_prolific_ids = addvars(entered_real_prolific_ids,...
     real_prolific_id);
 
-entered_real_prolific_id.other_file_row_idx = [];
+entered_real_prolific_ids.other_file_row_idx = [];
 
-entered_real_prolific_id = renamevars(entered_real_prolific_id,...
+entered_real_prolific_ids = renamevars(entered_real_prolific_ids,...
     'ptp','entered_prolific_id');
+
+%% Save this file
+if ~exist(fullfile(home,'results','analysis','other'))
+    mkdir(fullfile(home,'results','analysis','other'));
+end
+
+writetable(entered_real_prolific_ids,fullfile(home,'results','analysis',...
+    'other','entered_vs_real_prolific_ids.csv'));
+
+save(fullfile(home,'results','analysis','other',...
+    'entered_vs_real_prolific_ids.mat'),'entered_real_prolific_ids');
