@@ -77,8 +77,6 @@ for ipptp = 1:height(prolific_meta_data)
     
 end
 
-%% Deal with any miscopied names
-
 % So at this point, we can check the results_table_all_ptp and look for
 % those that don't have a corresponding id in prolific meta data AND their
 % status is NOT 'condition not assigned'. I find only 3 such participants,
@@ -96,53 +94,8 @@ idx_NOT_cond_not_ass = find(~strcmp(results_table_all_ptp.progress_state,...
 % also exclude the 'test' row, which was just me debugging the script
 idx_not_test = find(~strcmp(results_table_all_ptp.ptp,'test'));
 
-idx_nan_NOT_cond_not_ass_not_test = intersect(...
+idx_nan_and_NOT_cond_not_ass = intersect(...
     intersect(idx_nan,idx_NOT_cond_not_ass),idx_not_test);
 
-% For these 3 participants, find corresponding prolific meta data rows
-for iMiss = 1:length(idx_nan_NOT_cond_not_ass_not_test)
-    
-    iRow = idx_nan_NOT_cond_not_ass_not_test(iMiss);
-    
-    fprintf(['Searching for ' results_table_all_ptp.ptp{iRow} ...
-        ' in prolific meta data...\n']);
-    
-    % Take first 8 characters
-    str_to_search = results_table_all_ptp.ptp{iRow}(1:8);
-    
-    % Find this in prolific
-    logical_strfind = strfind(prolific_meta_data.participant_id,str_to_search);
-    logical_strfind = cellfun(@isempty,logical_strfind,'UniformOutput',false);
-    logical_strfind = cell2mat(logical_strfind);
-    ind_match = find(logical_strfind == 0);    
-    
-    if ~isempty(ind_match)
-        
-        fprintf(['Found! Row ' int2str(ind_match) ...
-            '. Full ID: ' prolific_meta_data.participant_id{ind_match} '\n']);
-    
-        results_table_all_ptp.other_file_row_idx(iRow) = ind_match;
-        
-        prolific_meta_data.other_file_row_idx(ind_match) = iRow;
-        
-    else
-        fprintf('Failed...\n');
-    end
-end
+% For these 3 participants, find 
 
-%% Save everything in a separate file
-idx_rows = find(~isnan(results_table_all_ptp.other_file_row_idx));
-
-entered_real_prolific_id = results_table_all_ptp(idx_rows,...
-    {'ptp','other_file_row_idx'});
-
-real_prolific_id = prolific_meta_data.participant_id(...
-    entered_real_prolific_id.other_file_row_idx);
-
-entered_real_prolific_id = addvars(entered_real_prolific_id,...
-    real_prolific_id);
-
-entered_real_prolific_id.other_file_row_idx = [];
-
-entered_real_prolific_id = renamevars(entered_real_prolific_id,...
-    'ptp','entered_prolific_id');
