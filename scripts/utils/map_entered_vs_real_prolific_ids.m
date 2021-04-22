@@ -55,7 +55,7 @@ for ipptp = 1:height(prolific_meta_data)
     logical_strfind = cellfun(@isempty,logical_strfind,'UniformOutput',false);
     logical_strfind = cell2mat(logical_strfind);
     ind_match = find(logical_strfind == 0);
-
+    
     if length(ind_match) == 2
        
         % So the participant probably attempted the experiment at first,
@@ -72,7 +72,7 @@ for ipptp = 1:height(prolific_meta_data)
     
     if ~isempty(ind_match)
         results_table_all_ptp.other_file_row_idx(ind_match) = ipptp;
-        prolific_meta_data.other_file_row_idx(ipptp) = ind_match;
+        prolific_meta_data.other_file_row_idx(ipptp)        = ind_match;
     end
     
 end

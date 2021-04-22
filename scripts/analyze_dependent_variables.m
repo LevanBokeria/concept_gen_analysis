@@ -24,7 +24,7 @@ end
 addpath(genpath(home));
 
 %% Data parameters 
-saveFiles          = 1;
+saveFiles          = 0;
 drawNormalityPlots = 0;
 plotFMSEstimation  = 0;
 
@@ -266,6 +266,8 @@ end
 if saveFiles
     save(fullfile(home,'results','analysis','results_table_qc_pass_ptp_analyzed.mat'),...
         'results_table_qc_pass_ptp');
+    save(fullfile(home,'results','analysis','results_table_all_ptp.mat'),...
+        'results_table_all_ptp');    
     
     % Save as excel
     results_table_qc_pass_ptp_excel = results_table_qc_pass_ptp;
