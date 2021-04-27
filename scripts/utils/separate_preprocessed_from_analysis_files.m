@@ -44,17 +44,3 @@ if saveFiles
     save(fullfile(home,'results','analysis','results_table_all_ptp.mat'),...
         'results_table_all_ptp')
 end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
