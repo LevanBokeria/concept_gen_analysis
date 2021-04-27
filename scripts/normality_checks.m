@@ -1,3 +1,22 @@
+%% Get only qc pass ptps
+results_table_qc_pass_ptp = get_only_qc_pass(results_table_all_ptp);
+
+%% Define the dependent variables as separate variables
+% Learning rate
+learning_rate_congruent_0 = results_table_qc_pass_ptp.phase_2_min_phase_1_learning_rate_exp(...
+    results_table_qc_pass_ptp.congruency == 0);
+learning_rate_congruent_1 = results_table_qc_pass_ptp.phase_2_min_phase_1_learning_rate_exp(...
+    results_table_qc_pass_ptp.congruency == 1);
+
+% Variances 
+
+
+% ses 1-2 performance
+ses_1_2_perf_congruent_0 = results_table_qc_pass_ptp.phase_2_min_phase_1_ses_1_2_perf(...
+    results_table_qc_pass_ptp.congruency == 0);
+ses_1_2_perf_congruent_1 = results_table_qc_pass_ptp.phase_2_min_phase_1_ses_1_2_perf(...
+    results_table_qc_pass_ptp.congruency == 1);
+
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%% Transform the data %%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

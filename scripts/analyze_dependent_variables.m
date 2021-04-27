@@ -24,15 +24,23 @@ end
 addpath(genpath(home));
 
 %% Data parameters 
-saveFiles          = 0;
+saveFiles          = 1;
 plotFMSEstimation  = 0;
 
 %% Load the data for all ptps:
 [long_form_data_all_ptp,results_table_all_ptp,...
-    debrief_tbl_all_ptp, fb_inter_tbl_all_ptp] = ...
+    ~, ~] = ...
     load_all_participant_files(home);
 
 nPtp = height(results_table_all_ptp);
+
+%% First, remove the redundant empty columns
+long_form_data_all_ptp = removevars(long_form_data_all_ptp,...
+    {'learning_rate_intercept','learning_rate_exponent'});
+
+results_table_all_ptp = removevars(results_table_all_ptp,...
+    {'learning_rate_intercept','learning_rate_exponent'});
+
 
 %% Now, for each ptp, for each phase, fit the model.
 
@@ -45,6 +53,10 @@ results_table_all_ptp.phase_1_learning_rate_int = NaN(nPtp,1);
 results_table_all_ptp.phase_2_learning_rate_int = NaN(nPtp,1);
 results_table_all_ptp.phase_1_learning_rate_sse = NaN(nPtp,1);
 results_table_all_ptp.phase_2_learning_rate_sse = NaN(nPtp,1);
+
+long_form_data_all_ptp.learning_rate_exp = NaN(height(long_form_data_all_ptp),1);
+long_form_data_all_ptp.learning_rate_int = NaN(height(long_form_data_all_ptp),1);
+long_form_data_all_ptp.learning_rate_sse = NaN(height(long_form_data_all_ptp),1);
 
 for iPtp = 1:nPtp
     
@@ -86,8 +98,7 @@ for iPtp = 1:nPtp
         [fms_est_c_fixed_intercept,...
             fms_est_c_fixed_intercept_sse] = est_learning_rate(y,params,plotFMSEstimation);
         
-        % Record everything in a table
-        
+        % Record everything in the results table
         results_table_all_ptp.(...
             ['phase_' int2str(iPhase) '_learning_rate_exp'])(iPtp) = ...
             fms_est_c_fixed_intercept;
@@ -97,6 +108,15 @@ for iPtp = 1:nPtp
         results_table_all_ptp.(...
             ['phase_' int2str(iPhase) '_learning_rate_sse'])(iPtp) = ...
             fms_est_c_fixed_intercept_sse;        
+        
+        % Also record in the long_form_data
+        idx_long_form_row = long_form_data_all_ptp.phase == iPhase & ...
+            strcmp(long_form_data_all_ptp.ptp,curr_ptp);
+        
+        long_form_data_all_ptp.learning_rate_exp(idx_long_form_row) = fms_est_c_fixed_intercept;
+        long_form_data_all_ptp.learning_rate_int(idx_long_form_row) = intercept0;
+        long_form_data_all_ptp.learning_rate_sse(idx_long_form_row) = fms_est_c_fixed_intercept_sse;
+        
     end % Phase
 end % iPtp
 
@@ -112,22 +132,39 @@ results_table_all_ptp.phase_2_min_phase_1_ses_1_2_perf = ...
     results_table_all_ptp.phase_2_ses_1_2_perf - ...
     results_table_all_ptp.phase_1_ses_1_2_perf;
 
-%% Get only qc pass ptps
-results_table_qc_pass_ptp = get_only_qc_pass(results_table_all_ptp);
+%% Save these as new files
+if saveFiles 
+    
+    save(fullfile(home,'results','analysis',...
+        'results_table_all_ptp_analyzed.mat'),'results_table_all_ptp');
+    
+    save(fullfile(home,'results','analysis',...
+        'long_form_data_all_ptp_analyzed.mat'),'long_form_data_all_ptp');
+    
+end
 
-%% Define the dependent variables as separate variables
-% Learning rate
-learning_rate_congruent_0 = results_table_qc_pass_ptp.phase_2_min_phase_1_learning_rate_exp(...
-    results_table_qc_pass_ptp.congruency == 0);
-learning_rate_congruent_1 = results_table_qc_pass_ptp.phase_2_min_phase_1_learning_rate_exp(...
-    results_table_qc_pass_ptp.congruency == 1);
+%% Add some new columns
 
-% Variances 
+% % Add the "global pass including phase 2 fail" column, to both files
+% % This column will check if a participant has global_pass=0 but they failed
+% % in phase 2 because of performance checks. Such participants should still
+% % be analyzed even thought they didn't reach the criterion in phase 2. 
+% 
+% 
+% if results_table_all_ptp.global_pass == 0
+%     if strcmp(results_table_all_ptp.progress_state,'qc_failed_phase_2')
+%         if results_table_all_ptp.min_perf_pass == 0 | ...
+%                 results_table_all_ptp.max_training_sess_pass == 0
+%             
+%             results_table_all_ptp.global_pass_incl_phase_2_fails = 1;
+%         end
+%     end
+% end
+% 
 
 
-% ses 1-2 performance
-ses_1_2_perf_congruent_0 = results_table_qc_pass_ptp.phase_2_min_phase_1_ses_1_2_perf(...
-    results_table_qc_pass_ptp.congruency == 0);
-ses_1_2_perf_congruent_1 = results_table_qc_pass_ptp.phase_2_min_phase_1_ses_1_2_perf(...
-    results_table_qc_pass_ptp.congruency == 1);
+
+
+
+
 
