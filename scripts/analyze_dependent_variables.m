@@ -142,29 +142,3 @@ if saveFiles
         'long_form_data_all_ptp_analyzed.mat'),'long_form_data_all_ptp');
     
 end
-
-%% Add some new columns
-
-% % Add the "global pass including phase 2 fail" column, to both files
-% % This column will check if a participant has global_pass=0 but they failed
-% % in phase 2 because of performance checks. Such participants should still
-% % be analyzed even thought they didn't reach the criterion in phase 2. 
-% 
-% 
-% if results_table_all_ptp.global_pass == 0
-%     if strcmp(results_table_all_ptp.progress_state,'qc_failed_phase_2')
-%         if results_table_all_ptp.min_perf_pass == 0 | ...
-%                 results_table_all_ptp.max_training_sess_pass == 0
-%             
-%             results_table_all_ptp.global_pass_incl_phase_2_fails = 1;
-%         end
-%     end
-% end
-% 
-
-
-
-
-
-
-
