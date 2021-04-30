@@ -23,7 +23,7 @@ end
 addpath(genpath(home));
 
 %% Data parameters 
-saveFiles          = 0;
+saveFiles = 0;
 
 %% Load the data for all ptps:
 load(fullfile(home,'results','analysis','results_table_all_ptp_analyzed.mat'));
@@ -56,45 +56,52 @@ long_form_data_all_ptp.global_pass_incl_phase_2_fails(idx_pass_long_form) = 1;
 results_table_all_ptp.global_pass_incl_phase_2_fails(idx_pass_results_table) = 1;
 
 %% For the long form data, add the current concept, curr arr, prompt_point_idx and time elapsed in mins
-% long_form_data_all_ptp.current_concept     = NaN(height(long_form_data_all_ptp),1);
-% long_form_data_all_ptp.current_arrangement = NaN(height(long_form_data_all_ptp),1);
-% long_form_data_all_ptp.prompt_point_idx    = NaN(height(long_form_data_all_ptp),1);
-% long_form_data_all_ptp.time_elapsed_min    = NaN(height(long_form_data_all_ptp),1);
-
-for iRow = 1:height(long_form_data_all_ptp)
-    
-    
-    curr_phase = long_form_data_all_ptp.phase(iRow);
-    
-    long_form_data_all_ptp.current_concept{iRow} = ...
-        long_form_data_all_ptp.(['concept_phase_' int2str(curr_phase)]){iRow};
-    
-    
-    long_form_data_all_ptp.current_arrangement{iRow} = ...
-        long_form_data_all_ptp.(['concept_phase_' int2str(curr_phase)]){iRow};
-    
-    
-    
-end
+long_form_data_all_ptp.current_concept     = cell(height(long_form_data_all_ptp),1);
+long_form_data_all_ptp.arr_phase_1_name    = zeros(height(long_form_data_all_ptp),1);
+long_form_data_all_ptp.arr_phase_2_name    = zeros(height(long_form_data_all_ptp),1);
+long_form_data_all_ptp.current_arrangement = zeros(height(long_form_data_all_ptp),1);
+long_form_data_all_ptp.prompt_point_idx    = zeros(height(long_form_data_all_ptp),1);
+long_form_data_all_ptp.time_elapsed_min    = zeros(height(long_form_data_all_ptp),1);
 
 
-% Change the concept
-idx_curr_concept_nl = ...
-    (long_form_data_all_ptp.phase == 1 & ...
-    strcmp(long_form_data_all_ptp.concept_phase_1,'neck_legs_space')...
-    ) | ...
-    (long_form_data_all_ptp.phase == 2 & ...
-    strcmp(long_form_data_all_ptp.concept_phase_2,'neck_legs_space')...
-    );
+% Change arr_phase_1_name and phase 2
 
-idx_curr_concept_bt = ...
-    (long_form_data_all_ptp.phase == 1 & ...
-    strcmp(long_form_data_all_ptp.concept_phase_1,'beak_tail_space')...
-    ) | ...
-    (long_form_data_all_ptp.phase == 2 & ...
-    strcmp(long_form_data_all_ptp.concept_phase_2,'beak_tail_space')...
-    );
+% Phase 1 arr 1 idxs
+arr_phase_1_mat = reshape(cell2mat(long_form_data_all_ptp.arr_phase_1),3,height(long_form_data_all_ptp))';
+arr_phase_2_mat = reshape(cell2mat(long_form_data_all_ptp.arr_phase_2),3,height(long_form_data_all_ptp))';
 
-long_form_data_all_ptp.current_concept(idx_curr_concept_nl) = 'neck_legs_space';
-long_form_data_all_ptp.current_concept(idx_curr_concept_bt) = 'beak_tail_space';
+% Find all the indices to substitute
+arr_1_phase_1_idx = arr_phase_1_mat(:,1) == 1;
+arr_2_phase_1_idx = arr_phase_1_mat(:,1) == 14;
+arr_3_phase_1_idx = arr_phase_1_mat(:,1) == 3;
+arr_4_phase_1_idx = arr_phase_1_mat(:,1) == 15;
+
+arr_1_phase_2_idx = arr_phase_2_mat(:,1) == 1;
+arr_2_phase_2_idx = arr_phase_2_mat(:,1) == 14;
+arr_3_phase_2_idx = arr_phase_2_mat(:,1) == 3;
+arr_4_phase_2_idx = arr_phase_2_mat(:,1) == 15;
+
+% Populate arrangement names 
+long_form_data_all_ptp.arr_phase_1_name(arr_1_phase_1_idx) = 1;
+long_form_data_all_ptp.arr_phase_1_name(arr_2_phase_1_idx) = 2;
+long_form_data_all_ptp.arr_phase_1_name(arr_3_phase_1_idx) = 3;
+long_form_data_all_ptp.arr_phase_1_name(arr_4_phase_1_idx) = 4;
+
+long_form_data_all_ptp.arr_phase_2_name(arr_1_phase_2_idx) = 1;
+long_form_data_all_ptp.arr_phase_2_name(arr_2_phase_2_idx) = 2;
+long_form_data_all_ptp.arr_phase_2_name(arr_3_phase_2_idx) = 3;
+long_form_data_all_ptp.arr_phase_2_name(arr_4_phase_2_idx) = 4;
+
+% Current arrangement
+% - find all phase 1 idxs
+idx_phase_1 = long_form_data_all_ptp.phase == 1;
+idx_phase_2 = long_form_data_all_ptp.phase == 2;
+
+long_form_data_all_ptp.current_arrangement(idx_phase_1) = long_form_data_all_ptp.arr_phase_1_name(idx_phase_1);
+long_form_data_all_ptp.current_arrangement(idx_phase_2) = long_form_data_all_ptp.arr_phase_1_name(idx_phase_2);
+
+
+% Do the same for current concept
+long_form_data_all_ptp.current_concept(idx_phase_1) = long_form_data_all_ptp.concept_phase_1(idx_phase_1);
+long_form_data_all_ptp.current_concept(idx_phase_2) = long_form_data_all_ptp.concept_phase_2(idx_phase_2);
 
