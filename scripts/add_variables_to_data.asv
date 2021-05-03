@@ -136,7 +136,9 @@ prolific_metadata_rel = prolific_metadata(:,{'participant_id',...
 % tables. For that, we need a shared "key" column. So in the results_table
 % create the participant_id column, the entered prolific IDs. 
 
-% For those rows that don't have a corresponding entered ID, remove them.
+% For those rows that don't have a corresponding entered ID, remember their
+% index, we will remove them for now, then join the tables, then add them
+% back in. 
 
 idx_to_remove = [];
 
@@ -146,14 +148,8 @@ for iptp = 1:height(results_table_all_ptp)
     
     if strcmp(entered_id,'test')
         
-        results_table_all_ptp.participant_id{iptp} = entered_id;
-    
-        idx_to_remove = [idx_to_remove iptp];
-        
-        % Add this as an empty row to the prolific meta data
-        prolific_metadata_rel.participant_id{height(prolific_metadata_rel)...
-            +1} = entered_id;
-
+        results_table_all_ptp.participant_id{iptp} = 'NA';
+                
         continue
     end
     
@@ -164,13 +160,9 @@ for iptp = 1:height(results_table_all_ptp)
         
         assert(strcmp(results_table_all_ptp.progress_state{iptp},'condition not assigned'));
         
-        results_table_all_ptp.participant_id{iptp} = entered_id;
+        results_table_all_ptp.participant_id{iptp} = 'NA';
         
         idx_to_remove = [idx_to_remove iptp];
-        
-        % Add this as an empty row to the prolific meta data
-        prolific_metadata_rel.participant_id{height(prolific_metadata_rel)...
-            +1} = entered_id;        
         
         continue
         
@@ -188,9 +180,10 @@ for iptp = 1:height(results_table_all_ptp)
     
 end
 
-% Join the tables
-results_table_all_ptp = join(results_table_all_ptp,prolific_metadata_rel,...
-    'Keys','participant_id');
+% Remove the rows without matching participant_id values
+clean_table = results_table_all_ptp;
+clean_table(idx_to_remove,:) = [];
 
-% remove the participant ID column
-results_table_all_ptp.participant_id = [];
+% Join the tables
+clean_table_joined = join(clean_table,prolific_metadata_rel,...
+    'Keys','participant_id');
