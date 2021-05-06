@@ -73,18 +73,17 @@ fprintf(['Adding current_concept, current_arrangement, ',...
     'arr_phase_2_name columns to the long form data table...\n']);
 
 % Check if these already exist
-if ~isempty(find(strcmp(long_form_data_all_ptp.Properties.VariableNames,...
-        'current_concept')))
-    
-    fprintf('long_form_data file already has a current_concept column. Probably others too. Skipping this step...\n');
-else
+% if ~isempty(find(strcmp(long_form_data_all_ptp.Properties.VariableNames,...
+%         'experiment')))
+%     
+%     fprintf('long_form_data file already has a current_concept column. Probably others too. Skipping this step...\n');
+% else
     long_form_data_all_ptp.current_concept     = cell(height(long_form_data_all_ptp),1);
     long_form_data_all_ptp.arr_phase_1_name    = zeros(height(long_form_data_all_ptp),1);
     long_form_data_all_ptp.arr_phase_2_name    = zeros(height(long_form_data_all_ptp),1);
     long_form_data_all_ptp.current_arrangement = zeros(height(long_form_data_all_ptp),1);
     long_form_data_all_ptp.prompt_point_idx    = zeros(height(long_form_data_all_ptp),1);
-    long_form_data_all_ptp.time_elapsed_min    = zeros(height(long_form_data_all_ptp),1);
-    
+    long_form_data_all_ptp.experiment          = zeros(height(long_form_data_all_ptp),1);
     
     % Change arr_phase_1_name and phase 2
     
@@ -120,8 +119,7 @@ else
     idx_phase_2 = long_form_data_all_ptp.phase == 2;
     
     long_form_data_all_ptp.current_arrangement(idx_phase_1) = long_form_data_all_ptp.arr_phase_1_name(idx_phase_1);
-    long_form_data_all_ptp.current_arrangement(idx_phase_2) = long_form_data_all_ptp.arr_phase_1_name(idx_phase_2);
-    
+    long_form_data_all_ptp.current_arrangement(idx_phase_2) = long_form_data_all_ptp.arr_phase_2_name(idx_phase_2);
     
     % Do the same for current concept
     long_form_data_all_ptp.current_concept(idx_phase_1) = long_form_data_all_ptp.concept_phase_1(idx_phase_1);
@@ -138,8 +136,57 @@ else
     long_form_data_all_ptp.prompt_point_idx(idx_prompt_item_idx_1) = item_point_idxs_mat(idx_prompt_item_idx_1,1);
     long_form_data_all_ptp.prompt_point_idx(idx_prompt_item_idx_2) = item_point_idxs_mat(idx_prompt_item_idx_2,2);
 
+    % Now the experiment
+    long_form_data_all_ptp.experiment(arr_1_phase_1_idx | arr_2_phase_1_idx) = ...
+        1;
+    long_form_data_all_ptp.experiment(arr_3_phase_1_idx | arr_4_phase_1_idx) = ...
+        2;    
+% end
+
+%% Add the arrangement names and experiment to the results table
+results_table_all_ptp.arr_phase_1_name    = zeros(height(results_table_all_ptp),1);
+results_table_all_ptp.arr_phase_2_name    = zeros(height(results_table_all_ptp),1);
+results_table_all_ptp.experiment          = zeros(height(results_table_all_ptp),1);
+
+for i = 1:height(results_table_all_ptp)
+    
+    % Give names to arrangements, and to the experiment
+    if results_table_all_ptp.arr_phase_1{i} == [1;8;15]
+        results_table_all_ptp.arr_phase_1_name(i) = 1;
+        results_table_all_ptp.arr_phase_2_name(i) = 2;
+        
+        results_table_all_ptp.experiment(i)       = 1;
+        
+    elseif results_table_all_ptp.arr_phase_1{i} == [14;9;4]
+        results_table_all_ptp.arr_phase_1_name(i) = 2;
+        results_table_all_ptp.arr_phase_2_name(i) = 1;
+        
+        results_table_all_ptp.experiment(i)       = 1;        
+        
+    elseif results_table_all_ptp.arr_phase_1{i} == [3;8;14]
+        results_table_all_ptp.arr_phase_1_name(i) = 3;
+        results_table_all_ptp.arr_phase_2_name(i) = 4;
+        
+        results_table_all_ptp.experiment(i)       = 2;        
+        
+    elseif results_table_all_ptp.arr_phase_1{i} == [15;5;12]
+        results_table_all_ptp.arr_phase_1_name(i) = 4;
+        results_table_all_ptp.arr_phase_2_name(i) = 3;
+        
+        results_table_all_ptp.experiment(i)       = 2;        
+        
+    elseif isnan(results_table_all_ptp.arr_phase_1{i})
+        results_table_all_ptp.arr_phase_1_name(i) = NaN;
+        results_table_all_ptp.arr_phase_2_name(i) = NaN;
+        
+        results_table_all_ptp.experiment(i)       = NaN;
+        
+    else
+        i
+    end
+    
 end
-%% Add the prolific metadata columns
+%% Add the prolific metadata columns to the results table
 
 fprintf('Adding prolific meta data to the results table... \n');
 
@@ -233,6 +280,9 @@ end
 %% Save everything
 
 if saveMatFiles
+    
+    fprintf('Saving mat files...\n');
+    
     save(fullfile(home,'results','analysis',...
         'results_table_all_ptp_analyzed.mat'),'results_table_all_ptp');
     save(fullfile(home,'results','analysis',...
@@ -240,6 +290,8 @@ if saveMatFiles
 end
 
 if saveCSVFiles
+    
+    fprintf('Saving csv files...\n');
     save_table_for_excel(results_table_all_ptp,fullfile(home,'results',...
         'analysis','results_table_all_ptp_analyzed.csv'),1);
     save_table_for_excel(long_form_data_all_ptp,fullfile(home,'results',...
