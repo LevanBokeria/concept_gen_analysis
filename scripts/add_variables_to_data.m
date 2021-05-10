@@ -40,11 +40,11 @@ nPtp = height(results_table_all_ptp);
 
 fprintf('Adding the global_pass_incl_phase_2_fails columns...\n');
 
-% If the column already exists, alert me and skip this
-if ~isempty(find(strcmp(results_table_all_ptp.Properties.VariableNames,...
-        'global_pass_incl_phase_2_fails')))
-    fprintf('results table already has the global_pass_incl_phase_2_fails column!!! Skipping this step...\n');
-else
+% % If the column already exists, alert me and skip this
+% if ~isempty(find(strcmp(results_table_all_ptp.Properties.VariableNames,...
+%         'global_pass_incl_phase_2_fails')))
+%     fprintf('results table already has the global_pass_incl_phase_2_fails column!!! Skipping this step...\n');
+% else
     
     % Add these columns to the data
     long_form_data_all_ptp.global_pass_incl_phase_2_fails = long_form_data_all_ptp.global_pass;
@@ -65,7 +65,7 @@ else
     long_form_data_all_ptp.global_pass_incl_phase_2_fails(idx_pass_long_form)    = 1;
     results_table_all_ptp.global_pass_incl_phase_2_fails(idx_pass_results_table) = 1;
 
-end
+% end
 %% For the long form data, add the current concept, curr arr, prompt_point_idx
 
 fprintf(['Adding current_concept, current_arrangement, ',...
@@ -191,11 +191,11 @@ end
 fprintf('Adding prolific meta data to the results table... \n');
 
 
-% Check if prolific data is already combined
-if ~isempty(find(strcmp(results_table_all_ptp.Properties.VariableNames,...
-        'status')))
-    fprintf('results table seems to be already combined with prolific meta data. Skipping... \n');
-else
+% % Check if prolific data is already combined
+% if ~isempty(find(strcmp(results_table_all_ptp.Properties.VariableNames,...
+%         'status')))
+%     fprintf('results table seems to be already combined with prolific meta data. Skipping... \n');
+% else
     
     
     % Load the prolific metadata
@@ -264,7 +264,7 @@ else
         real_id_prolific_idx = find(strcmp(prolific_metadata_rel.participant_id,real_id));
         
         % Add the real id
-        results_table_all_ptp.participant_id{iptp} = real_id;
+        results_tabl e_all_ptp.participant_id{iptp} = real_id;
         
         
     end
@@ -276,7 +276,7 @@ else
     % remove the participant ID column
     results_table_all_ptp.participant_id = [];
 
-end
+% end
 %% Save everything
 
 if saveMatFiles
