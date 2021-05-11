@@ -166,20 +166,32 @@ for i = 1:height(results_table_all_ptp)
         
     elseif results_table_all_ptp.arr_phase_1{i} == [14;9;4]
         results_table_all_ptp.arr_phase_1_name(i) = 2;
-        results_table_all_ptp.arr_phase_2_name(i) = 1;
-        
+
+        if results_table_all_ptp.congruency(i) == 1
+            results_table_all_ptp.arr_phase_2_name(i) = 2;
+        else
+            results_table_all_ptp.arr_phase_2_name(i) = 1;
+        end        
         results_table_all_ptp.experiment(i)       = 1;        
         
     elseif results_table_all_ptp.arr_phase_1{i} == [3;8;14]
         results_table_all_ptp.arr_phase_1_name(i) = 3;
-        results_table_all_ptp.arr_phase_2_name(i) = 4;
-        
+
+        if results_table_all_ptp.congruency(i) == 1
+            results_table_all_ptp.arr_phase_2_name(i) = 3;
+        else
+            results_table_all_ptp.arr_phase_2_name(i) = 4;
+        end        
         results_table_all_ptp.experiment(i)       = 2;        
         
     elseif results_table_all_ptp.arr_phase_1{i} == [15;5;12]
         results_table_all_ptp.arr_phase_1_name(i) = 4;
-        results_table_all_ptp.arr_phase_2_name(i) = 3;
-        
+
+        if results_table_all_ptp.congruency(i) == 1
+            results_table_all_ptp.arr_phase_2_name(i) = 4;
+        else
+            results_table_all_ptp.arr_phase_2_name(i) = 3;
+        end        
         results_table_all_ptp.experiment(i)       = 2;        
         
     elseif isnan(results_table_all_ptp.arr_phase_1{i})
@@ -203,7 +215,6 @@ fprintf('Adding prolific meta data to the results table... \n');
 %         'status')))
 %     fprintf('results table seems to be already combined with prolific meta data. Skipping... \n');
 % else
-    
     
     % Load the prolific metadata
     prolific_metadata = readtable(fullfile(home,'data','prolific_meta_data','united_meta_data.xlsx'));
@@ -271,8 +282,7 @@ fprintf('Adding prolific meta data to the results table... \n');
         real_id_prolific_idx = find(strcmp(prolific_metadata_rel.participant_id,real_id));
         
         % Add the real id
-        results_tabl e_all_ptp.participant_id{iptp} = real_id;
-        
+        results_table_all_ptp.participant_id{iptp} = real_id;
         
     end
     

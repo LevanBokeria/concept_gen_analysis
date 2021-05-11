@@ -25,8 +25,7 @@ end
 addpath(genpath(home));
 
 %% Data parameters 
-saveLongFormFiles     = 0;
-saveResultsTableFiles = 1;
+saveLongFiles          = 1;
 plotFMSEstimation  = 0;
 
 %% Load the data for all ptps:
@@ -135,12 +134,12 @@ results_table_all_ptp.phase_2_min_phase_1_ses_1_2_perf = ...
     results_table_all_ptp.phase_1_ses_1_2_perf;
 
 %% Save these as new files
-if saveLongFormFiles 
+if saveFiles 
+    
+    save(fullfile(home,'results','analysis',...
+        'results_table_all_ptp_analyzed.mat'),'results_table_all_ptp');
+    
     save(fullfile(home,'results','analysis',...
         'long_form_data_all_ptp_analyzed.mat'),'long_form_data_all_ptp');
-end
-
-if saveResultsTableFiles
-    save(fullfile(home,'results','analysis',...
-        'results_table_all_ptp_analyzed.mat'),'results_table_all_ptp');   
+    
 end
