@@ -24,9 +24,9 @@ end
 addpath(genpath(home));
 
 %% Data parameters 
-saveLongFormMat = 0;
-saveLongFormCSV = 0;
-saveResultsTableMat = 1;
+saveLongFormMat = 1;
+saveLongFormCSV = 1;
+saveResultsTableCS = 1;
 saveResultsTableCSV = 1;
 
 %% Load the data for all ptps:
@@ -286,37 +286,21 @@ fprintf('Adding prolific meta data to the results table... \n');
 % end
 %% Save everything
 
-if saveLongFormMat
+if saveMatFiles
     
-    fprintf('Saving long form mat file...\n');
-
+    fprintf('Saving mat files...\n');
+    
+    save(fullfile(home,'results','analysis',...
+        'results_table_all_ptp_analyzed.mat'),'results_table_all_ptp');
     save(fullfile(home,'results','analysis',...
         'long_form_data_all_ptp_analyzed.mat'),'long_form_data_all_ptp');
 end
 
-if saveResultsTableMat
+if saveCSVFiles
     
-    fprintf('Saving results table mat file...\n');
-    
-    save(fullfile(home,'results','analysis',...
-        'results_table_all_ptp_analyzed.mat'),'results_table_all_ptp');
-end
-
-
-
-if saveLongFormCSV
-    
-    fprintf('Saving long form csv file...\n');
-
-    save_table_for_excel(long_form_data_all_ptp,fullfile(home,'results',...
-        'analysis','long_form_data_all_ptp_analyzed.csv'),1);    
-end
-
-if saveResultsTableCSV
-    
-    fprintf('Saving results table csv file...\n');
-
+    fprintf('Saving csv files...\n');
     save_table_for_excel(results_table_all_ptp,fullfile(home,'results',...
         'analysis','results_table_all_ptp_analyzed.csv'),1);
-
+    save_table_for_excel(long_form_data_all_ptp,fullfile(home,'results',...
+        'analysis','long_form_data_all_ptp_analyzed.csv'),1);    
 end
