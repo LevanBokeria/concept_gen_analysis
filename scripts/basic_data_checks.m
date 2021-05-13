@@ -45,7 +45,8 @@ idx_too_many_trials = find(G.GroupCount > 42);
 
 if ~isempty(idx_too_many_trials)
     
-    fprintf(['Found ' numel(idx_too_many_trials) ' participants with ' ...
+    fprintf(['Found ' int2str(numel(idx_too_many_trials))...
+        ' participants with ' ...
         'too many trials...\n']);
     
     % Get their participant names

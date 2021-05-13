@@ -1,5 +1,9 @@
 function data_out = get_only_qc_pass(data_in)
 
+fprintf('THIS SCRIPT IS OUTTATED');
+
+input('outtadet script')
+
 %% Description
 
 % This function will just filter the given dataset to give you only data

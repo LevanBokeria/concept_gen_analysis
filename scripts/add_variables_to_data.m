@@ -28,10 +28,10 @@ end
 addpath(genpath(home));
 
 %% Data parameters 
-saveLongFormMat = 0;
-saveLongFormCSV = 0;
-saveResultsTableMat = 1;
-saveResultsTableCSV = 1;
+saveLongFormMat     = 0;
+saveLongFormCSV     = 0;
+saveResultsTableMat = 0;
+saveResultsTableCSV = 0;
 
 %% Load the data for all ptps:
 load(fullfile(home,'results','analysis','results_table_all_ptp_analyzed.mat'));

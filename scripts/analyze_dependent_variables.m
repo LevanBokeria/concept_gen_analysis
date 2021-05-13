@@ -25,9 +25,9 @@ end
 addpath(genpath(home));
 
 %% Data parameters 
-saveLongFormFiles     = 0;
+saveLongFormFiles     = 1;
 saveResultsTableFiles = 1;
-plotFMSEstimation  = 0;
+plotFMSEstimation     = 0;
 
 %% Load the data for all ptps:
 [long_form_data_all_ptp,results_table_all_ptp,...
