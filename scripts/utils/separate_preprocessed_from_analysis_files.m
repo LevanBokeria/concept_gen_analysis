@@ -7,6 +7,9 @@
 % a separate script that then loads those, adds any new columns, and saves
 % as a different file. 
 
+% This script was for one time use, when transitioning to the new way of
+% analyzing the data, where preprocessing and analysis steps were better
+% separated.
 %% General setup
 clear; clc;
 

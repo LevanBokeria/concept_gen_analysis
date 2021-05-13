@@ -5,8 +5,8 @@
 % use fminsearch to find the best fit of the model to data, using
 % least squares error.
 
-% It will record the output in the results_table_all_ptp.mat and the
-% long_form_data_all_ptp.mat
+% It will record the output in the results_table_all_ptp_analyzed.mat and the
+% long_form_data_all_ptp_analyzed.mat
 
 %% Global parameters
 clear; close all;

@@ -7,6 +7,10 @@
 % such as global_pass_incl_phase_2_fail, columns from prolific meta data,
 % etc.
 
+% It will also call a script that checks for some basic data checks, such
+% as that number of trials, sessions, phases, etc was correct for each
+% participant.
+
 %% Global parameters
 clear; close all;
 
@@ -210,11 +214,11 @@ end
 fprintf('Adding prolific meta data to the results table... \n');
 
 
-% % Check if prolific data is already combined
-% if ~isempty(find(strcmp(results_table_all_ptp.Properties.VariableNames,...
-%         'status')))
-%     fprintf('results table seems to be already combined with prolific meta data. Skipping... \n');
-% else
+% Check if prolific data is already combined
+if ~isempty(find(strcmp(results_table_all_ptp.Properties.VariableNames,...
+        'status')))
+    fprintf('results table seems to be already combined with prolific meta data. Skipping... \n');
+else
     
     % Load the prolific metadata
     prolific_metadata = readtable(fullfile(home,'data','prolific_meta_data','united_meta_data.xlsx'));
@@ -293,7 +297,13 @@ fprintf('Adding prolific meta data to the results table... \n');
     % remove the participant ID column
     results_table_all_ptp.participant_id = [];
 
-% end
+end
+
+%% Do the basic data checks 
+fprintf('Doing the basic data checks now...\n');
+[long_form_data_all_ptp,results_table_all_ptp] = ...
+    basic_data_checks(long_form_data_all_ptp,results_table_all_ptp);
+
 %% Save everything
 
 if saveLongFormMat
@@ -311,8 +321,6 @@ if saveResultsTableMat
     save(fullfile(home,'results','analysis',...
         'results_table_all_ptp_analyzed.mat'),'results_table_all_ptp');
 end
-
-
 
 if saveLongFormCSV
     
