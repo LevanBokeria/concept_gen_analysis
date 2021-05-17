@@ -3,6 +3,9 @@
 # This function takes in one of the results tables, and deletes data from those 
 # participants who did not pass the QC criteria
 
+# Potentially, add a condition that the participant did not "RETURN" 
+# their prolific submission
+
 get_only_qc_pass = function(dataIn){
         
         dataIn <- subset(dataIn,

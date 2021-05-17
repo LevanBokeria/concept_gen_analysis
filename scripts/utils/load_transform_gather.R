@@ -14,16 +14,14 @@ load_transform_gather <- function(){
         # Source various scripts
         source('./utils/mutate_results_table_columns.R')
         source('./utils/get_only_qc_pass.R')
-        source('./utils/basic_checks.R')
-        
+
         # Read the excel files
-        results_table_qc_pass_ptp_analyzed <- read_excel(
-                'C:/Users/levan/GitHub/concept_gen_analysis/results/analysis/results_table_qc_pass_ptp_analyzed.xlsx') %>%
+        results_table_all_ptp_analyzed <- read_csv(
+                'C:/Users/levan/GitHub/concept_gen_analysis/results/analysis/results_table_all_ptp_analyzed.csv') %>%
                 as_tibble()
         
-        long_form_data_all_ptp <- read_excel(
-                'C:/Users/levan/GitHub/concept_gen_analysis/results/analysis/long_form_data_all_ptp.xlsx',
-                sheet = 1) %>%
+        long_form_data_all_ptp <- read_csv(
+                'C:/Users/levan/GitHub/concept_gen_analysis/results/analysis/long_form_data_all_ptp_analyzed.csv') %>%
                 as_tibble()
         
         prolific_meta_data <- 
