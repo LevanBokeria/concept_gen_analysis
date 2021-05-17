@@ -9,7 +9,11 @@
         }
         if (!('readxl' %in% (.packages()))){
                 library(readxl)
+        }    
+        if (!('rstatix' %in% (.packages()))){
+                library(rstatix)
         }        
+        
         
         # Source various scripts
         source('./utils/mutate_results_table_columns.R')
