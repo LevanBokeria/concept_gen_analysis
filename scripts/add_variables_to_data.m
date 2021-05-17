@@ -28,10 +28,10 @@ end
 addpath(genpath(home));
 
 %% Data parameters 
-saveLongFormMat     = 0;
-saveLongFormCSV     = 0;
-saveResultsTableMat = 0;
-saveResultsTableCSV = 0;
+saveLongFormMat     = 1;
+saveLongFormCSV     = 1;
+saveResultsTableMat = 1;
+saveResultsTableCSV = 1;
 
 %% Load the data for all ptps:
 load(fullfile(home,'results','analysis','results_table_all_ptp_analyzed.mat'));
@@ -90,6 +90,10 @@ fprintf(['Adding current_concept, current_arrangement, ',...
     long_form_data_all_ptp.current_arrangement = zeros(height(long_form_data_all_ptp),1);
     long_form_data_all_ptp.prompt_point_idx    = zeros(height(long_form_data_all_ptp),1);
     long_form_data_all_ptp.experiment          = zeros(height(long_form_data_all_ptp),1);
+    long_form_data_all_ptp.phase_1_lower_left_outlier = ...
+        zeros(height(long_form_data_all_ptp),1);
+    long_form_data_all_ptp.phase_2_lower_left_outlier = ...
+        zeros(height(long_form_data_all_ptp),1);
     
     % Change arr_phase_1_name and phase 2
     
@@ -118,6 +122,19 @@ fprintf(['Adding current_concept, current_arrangement, ',...
     long_form_data_all_ptp.arr_phase_2_name(arr_2_phase_2_idx) = 2;
     long_form_data_all_ptp.arr_phase_2_name(arr_3_phase_2_idx) = 3;
     long_form_data_all_ptp.arr_phase_2_name(arr_4_phase_2_idx) = 4;
+    
+    
+    % Phase 1 and 2 lower left outliers
+    long_form_data_all_ptp.phase_1_lower_left_outlier(arr_1_phase_1_idx) = 1;
+    long_form_data_all_ptp.phase_1_lower_left_outlier(arr_4_phase_1_idx) = 1;
+    long_form_data_all_ptp.phase_1_lower_left_outlier(arr_2_phase_1_idx) = 0;
+    long_form_data_all_ptp.phase_1_lower_left_outlier(arr_3_phase_1_idx) = 0;
+    
+    long_form_data_all_ptp.phase_2_lower_left_outlier(arr_1_phase_2_idx) = 1;
+    long_form_data_all_ptp.phase_2_lower_left_outlier(arr_4_phase_2_idx) = 1;
+    long_form_data_all_ptp.phase_2_lower_left_outlier(arr_2_phase_2_idx) = 0;
+    long_form_data_all_ptp.phase_2_lower_left_outlier(arr_3_phase_2_idx) = 0;    
+    
     
     % Current arrangement
     % - find all phase 1 idxs
@@ -153,54 +170,72 @@ fprintf(['Adding current_concept, current_arrangement, ',...
 results_table_all_ptp.arr_phase_1_name    = zeros(height(results_table_all_ptp),1);
 results_table_all_ptp.arr_phase_2_name    = zeros(height(results_table_all_ptp),1);
 results_table_all_ptp.experiment          = zeros(height(results_table_all_ptp),1);
+results_table_all_ptp.phase_1_lower_left_outlier = ...
+    zeros(height(results_table_all_ptp),1);
+results_table_all_ptp.phase_2_lower_left_outlier = ...
+    zeros(height(results_table_all_ptp),1);
 
 for i = 1:height(results_table_all_ptp)
     
     % Give names to arrangements, and to the experiment
     if results_table_all_ptp.arr_phase_1{i} == [1;8;15]
         results_table_all_ptp.arr_phase_1_name(i) = 1;
+        results_table_all_ptp.phase_1_lower_left_outlier(i) = 1;
         
         if results_table_all_ptp.congruency(i) == 1
             results_table_all_ptp.arr_phase_2_name(i) = 1;
+            results_table_all_ptp.phase_2_lower_left_outlier(i) = 1;
         else
             results_table_all_ptp.arr_phase_2_name(i) = 2;
+            results_table_all_ptp.phase_2_lower_left_outlier(i) = 0;
         end
         
         results_table_all_ptp.experiment(i)       = 1;
         
     elseif results_table_all_ptp.arr_phase_1{i} == [14;9;4]
         results_table_all_ptp.arr_phase_1_name(i) = 2;
+        results_table_all_ptp.phase_1_lower_left_outlier(i) = 0;
 
         if results_table_all_ptp.congruency(i) == 1
             results_table_all_ptp.arr_phase_2_name(i) = 2;
+            results_table_all_ptp.phase_2_lower_left_outlier(i) = 0;
         else
             results_table_all_ptp.arr_phase_2_name(i) = 1;
+            results_table_all_ptp.phase_2_lower_left_outlier(i) = 1;
         end        
         results_table_all_ptp.experiment(i)       = 1;        
         
     elseif results_table_all_ptp.arr_phase_1{i} == [3;8;14]
         results_table_all_ptp.arr_phase_1_name(i) = 3;
+        results_table_all_ptp.phase_1_lower_left_outlier(i) = 0;
 
         if results_table_all_ptp.congruency(i) == 1
             results_table_all_ptp.arr_phase_2_name(i) = 3;
+            results_table_all_ptp.phase_2_lower_left_outlier(i) = 0;
         else
             results_table_all_ptp.arr_phase_2_name(i) = 4;
+            results_table_all_ptp.phase_2_lower_left_outlier(i) = 1;
         end        
         results_table_all_ptp.experiment(i)       = 2;        
         
     elseif results_table_all_ptp.arr_phase_1{i} == [15;5;12]
         results_table_all_ptp.arr_phase_1_name(i) = 4;
+        results_table_all_ptp.phase_1_lower_left_outlier(i) = 1;
 
         if results_table_all_ptp.congruency(i) == 1
             results_table_all_ptp.arr_phase_2_name(i) = 4;
+            results_table_all_ptp.phase_2_lower_left_outlier(i) = 1;
         else
             results_table_all_ptp.arr_phase_2_name(i) = 3;
+            results_table_all_ptp.phase_2_lower_left_outlier(i) = 0;
         end        
         results_table_all_ptp.experiment(i)       = 2;        
         
     elseif isnan(results_table_all_ptp.arr_phase_1{i})
         results_table_all_ptp.arr_phase_1_name(i) = NaN;
         results_table_all_ptp.arr_phase_2_name(i) = NaN;
+        results_table_all_ptp.phase_1_lower_left_outlier(i) = NaN;
+        results_table_all_ptp.phase_2_lower_left_outlier(i) = NaN;
         
         results_table_all_ptp.experiment(i)       = NaN;
         

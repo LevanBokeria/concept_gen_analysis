@@ -1,7 +1,7 @@
 # This is a wrapper function to load the datasets, transform columns to factors and add new columns, 
 # get only qc_pass participants, and gather some of the columns.
 
-load_transform_gather <- function(){
+# load_transform_gather <- function(){
         
         # Load libraries
         if (!('tidyverse' %in% (.packages()))){
@@ -20,7 +20,7 @@ load_transform_gather <- function(){
                 'C:/Users/levan/GitHub/concept_gen_analysis/results/analysis/results_table_all_ptp_analyzed.csv') %>%
                 as_tibble()
         
-        long_form_data_all_ptp <- read_csv(
+        long_form_data_all_ptp_analyzed <- read_csv(
                 'C:/Users/levan/GitHub/concept_gen_analysis/results/analysis/long_form_data_all_ptp_analyzed.csv') %>%
                 as_tibble()
         
@@ -30,24 +30,21 @@ load_transform_gather <- function(){
                 sheet = 1) %>%
                 as_tibble()
         
-        # Basic checks
-        basic_checks(long_form_data_all_ptp)
-        
         # Transform columns to factors and add new columns
-        results_table_qc_pass_ptp_analyzed <- results_table_qc_pass_ptp_analyzed %>%
+        results_table_all_ptp_analyzed <- results_table_all_ptp_analyzed %>%
                 mutate_results_table_columns()
         
-        long_form_data_all_ptp <- long_form_data_all_ptp %>%
+        long_form_data_all_ptp_analyzed <- long_form_data_all_ptp_analyzed %>%
                 mutate_results_table_columns()
         
         
         # Get only QC pass participants
-        long_form_data_qc_pass_ptp <- get_only_qc_pass(long_form_data_all_ptp)
+        long_form_data_qc_pass_ptp <- get_only_qc_pass(long_form_data_all_ptp_analyzed)
         
         
         # Gather, otherwise its not actually in a long format
-        results_table_qc_pass_ptp_analyzed_gathered <- 
-                results_table_qc_pass_ptp_analyzed %>%
+        results_table_all_ptp_analyzed_gathered <- 
+                results_table_all_ptp_analyzed %>%
                 select(ptp,congruency,arrangement_pairs,arr_phase_1_1,arr_phase_2_1,
                        concept_phase_1,concept_phase_2,
                        phase_1_ses_1_2_perf,phase_2_ses_1_2_perf,
@@ -58,11 +55,11 @@ load_transform_gather <- function(){
         
         
         # Return everything
-        returnList <- list('long_form_data_all_ptp' = long_form_data_all_ptp,
+        returnList <- list('long_form_data_all_ptp_analyzed' = long_form_data_all_ptp_analyzed,
                            'long_form_data_qc_pass_ptp' = long_form_data_qc_pass_ptp,
-                           'results_table_qc_pass_ptp_analyzed' = 
-                                   results_table_qc_pass_ptp_analyzed,
-                           'results_table_qc_pass_ptp_analyzed_gathered' =
-                                   results_table_qc_pass_ptp_analyzed_gathered)
-        return(returnList)
-}
+                           'results_table_all_ptp_analyzed' = 
+                                   results_table_all_ptp_analyzed,
+                           'results_table_all_ptp_analyzed_gathered' =
+                                   results_table_all_ptp_analyzed_gathered)
+#         return(returnList)
+# }
