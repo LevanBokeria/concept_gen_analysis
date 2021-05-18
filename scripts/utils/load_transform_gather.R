@@ -1,7 +1,7 @@
 # This is a wrapper function to load the datasets, transform columns to factors and add new columns, 
 # get only qc_pass participants, and gather some of the columns.
 
-# load_transform_gather <- function(){
+load_transform_gather <- function(){
         
         # Load libraries
         if (!('tidyverse' %in% (.packages()))){
@@ -43,11 +43,13 @@
         
         
         # Get only QC pass participants
-        long_form_data_qc_pass_ptp <- get_only_qc_pass(long_form_data_all_ptp_analyzed)
-        results_table_qc_pass_ptp  <- get_only_qc_pass(results_table_all_ptp_analyzed)
+        long_form_data_qc_pass_ptp_analyzed <- 
+                get_only_qc_pass(long_form_data_all_ptp_analyzed)
+        results_table_qc_pass_ptp_analyzed  <- 
+                get_only_qc_pass(results_table_all_ptp_analyzed)
         
         results_table_qc_pass_ptp_analyzed_gathered <- 
-                results_table_qc_pass_ptp %>%
+                results_table_qc_pass_ptp_analyzed %>%
                 select(ptp,congruency,experiment,
                        arr_phase_1_1,arr_phase_2_1,
                        arr_phase_1_name,arr_phase_2_name,
@@ -57,15 +59,15 @@
                 pivot_longer(cols=c(phase_1_ses_1_2_perf,phase_2_ses_1_2_perf),
                             names_to='phase',values_to='ses_1_2_perf')
         
-        
         # Return everything
         returnList <- list(
                 'long_form_data_all_ptp_analyzed' = 
                         long_form_data_all_ptp_analyzed,
-                'long_form_data_qc_pass_ptp' = long_form_data_qc_pass_ptp,
+                'long_form_data_qc_pass_ptp_analyzed' = 
+                        long_form_data_qc_pass_ptp_analyzed,
                 'results_table_all_ptp_analyzed' = results_table_all_ptp_analyzed,
                 'results_table_qc_pass_ptp_analyzed' = results_table_qc_pass_ptp_analyzed,
                 'results_table_qc_pass_ptp_analyzed_gathered' = 
                         results_table_qc_pass_ptp_analyzed_gathered)
-#         return(returnList)
-# }
+        return(returnList)
+}

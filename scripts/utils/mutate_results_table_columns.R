@@ -1,6 +1,6 @@
 mutate_results_table_columns = function(dataIn){
         
-        print('starting the script')
+        # print('starting the script')
         
         # For both long_form and results_table files
         dataIn <- dataIn %>%
@@ -21,7 +21,6 @@ mutate_results_table_columns = function(dataIn){
         if ('status' %in% colnames(dataIn)){
           dataIn <- dataIn %>%
                   mutate(across(c(status,
-                                  age,
                                   entered_code,
                                   Sex),
                                 as.factor))
