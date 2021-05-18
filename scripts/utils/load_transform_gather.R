@@ -44,26 +44,28 @@
         
         # Get only QC pass participants
         long_form_data_qc_pass_ptp <- get_only_qc_pass(long_form_data_all_ptp_analyzed)
+        results_table_qc_pass_ptp  <- get_only_qc_pass(results_table_all_ptp_analyzed)
         
-        
-        # Gather, otherwise its not actually in a long format
-        results_table_all_ptp_analyzed_gathered <- 
-                results_table_all_ptp_analyzed %>%
-                select(ptp,congruency,arrangement_pairs,arr_phase_1_1,arr_phase_2_1,
+        results_table_qc_pass_ptp_analyzed_gathered <- 
+                results_table_qc_pass_ptp %>%
+                select(ptp,congruency,experiment,
+                       arr_phase_1_1,arr_phase_2_1,
+                       arr_phase_1_name,arr_phase_2_name,
                        concept_phase_1,concept_phase_2,
                        phase_1_ses_1_2_perf,phase_2_ses_1_2_perf,
                        phase_1_lower_left_outlier,phase_2_lower_left_outlier) %>%
-                gather(key='phase',value='ses_1_2_perf',
-                       phase_1_ses_1_2_perf,
-                       phase_2_ses_1_2_perf)
+                pivot_longer(cols=c(phase_1_ses_1_2_perf,phase_2_ses_1_2_perf),
+                            names_to='phase',values_to='ses_1_2_perf')
         
         
         # Return everything
-        returnList <- list('long_form_data_all_ptp_analyzed' = long_form_data_all_ptp_analyzed,
-                           'long_form_data_qc_pass_ptp' = long_form_data_qc_pass_ptp,
-                           'results_table_all_ptp_analyzed' = 
-                                   results_table_all_ptp_analyzed,
-                           'results_table_all_ptp_analyzed_gathered' =
-                                   results_table_all_ptp_analyzed_gathered)
+        returnList <- list(
+                'long_form_data_all_ptp_analyzed' = 
+                        long_form_data_all_ptp_analyzed,
+                'long_form_data_qc_pass_ptp' = long_form_data_qc_pass_ptp,
+                'results_table_all_ptp_analyzed' = results_table_all_ptp_analyzed,
+                'results_table_qc_pass_ptp_analyzed' = results_table_qc_pass_ptp_analyzed,
+                'results_table_qc_pass_ptp_analyzed_gathered' = 
+                        results_table_qc_pass_ptp_analyzed_gathered)
 #         return(returnList)
 # }
