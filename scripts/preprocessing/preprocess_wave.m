@@ -26,13 +26,13 @@ addpath(genpath(home));
 warning('off','MATLAB:table:RowsAddedExistingVars')
 
 % Name of the file containing participant data from JATOS
-batch_number    = 'batch_3';
-wave_name       = 'wave_8';
+batch_number    = 'batch_0';
+wave_name       = 'wave_2';
 batch_wave_name = [batch_number '_' wave_name];
 
 % Flags
-saveCurrPtpVars   = 1; % Save the preprocessed files for the current participants?
-saveWaveData      = 1; % Save the combined feedback data for this wave, so we can manually look through it.
+saveCurrPtpVars   = 0; % Save the preprocessed files for the current participants?
+saveWaveData      = 0; % Save the combined feedback data for this wave, so we can manually look through it.
 
 %% Read the filename and determine the number of participants
 

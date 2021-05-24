@@ -3,6 +3,9 @@ title: "explore_durations"
 output: bookdown::html_document2
 ---
 
+This code looks at how many sessions did the participants take on average. 
+I was trying to use this to gauge timings for the new experiment.
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 ```
