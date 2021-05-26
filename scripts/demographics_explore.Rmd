@@ -61,16 +61,18 @@ results_table_all_ptp_analyzed %>%
                        status != 'RETURNED' & 
                        status != 'TIMED-OUT' &
                        ptp != 'test' & 
-                       progress_state != 'condition not assigned') %>% 
-        group_by(congruency,Sex) %>%
+                       progress_state != 'condition not assigned' &
+                       experiment == 1) %>% 
+        group_by(Sex) %>%
         summarise(count = n()) %>%
         knitr::kable() %>%
         kable_styling(bootstrap_options = "striped")
 
 # Sex QC pass
 results_table_qc_pass_ptp_analyzed %>% 
-        subset(data_submitted == 1 & status != 'RETURNED') %>% 
-        group_by(congruency,Sex) %>%
+        subset(data_submitted == 1 & status != 'RETURNED' &
+                       experiment == 1) %>% 
+        group_by(Sex) %>%
         summarise(count = n()) %>%
         knitr::kable() %>%
         kable_styling(bootstrap_options = "striped")
@@ -80,7 +82,8 @@ results_table_all_ptp_analyzed %>%
                        status != 'RETURNED' & 
                        status != 'TIMED-OUT' &
                        ptp != 'test' & 
-                       progress_state != 'condition not assigned') %>% 
+                       progress_state != 'condition not assigned' &
+                       experiment == 1) %>% 
         # group_by(congruency) %>%
         get_summary_stats(age, show = c('mean','median','sd','min','max')) %>%
         knitr::kable() %>%
@@ -88,7 +91,8 @@ results_table_all_ptp_analyzed %>%
 
 # Age QC pass
 results_table_qc_pass_ptp_analyzed %>% 
-        subset(data_submitted == 1 & status != 'RETURNED') %>% 
+        subset(data_submitted == 1 & status != 'RETURNED' &
+                       experiment == 1) %>% 
         # group_by(congruency) %>%
         get_summary_stats(age, show = c('mean','median','sd','min','max')) %>%
         knitr::kable() %>%
