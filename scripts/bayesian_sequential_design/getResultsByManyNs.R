@@ -20,8 +20,8 @@ nLimit  <- 200
 crit1   <- 6
 crit2   <- 1/6
 
-nFrom <- 80
-nTo   <- 152
+nFrom <- 56
+nTo   <- 80
 nBy   <- 8
 minN  <- 24
 
@@ -33,7 +33,8 @@ saveOutData <- T
 loadFile  <- paste('_rslurm_d1_',
                    d1_str,'_limpg_',nLimit, '_crit1_', crit1,
                    '_minN_', minN, '_batchSize_', nBy,
-                   '/simulationResults_',d1_str,'_limpg_',nLimit, '_crit1_', crit1,
+                   '/simulationResults_',d1_str,'_limpg_',nLimit, 
+                   '_crit1_', crit1,
                    '_minN_', minN, '_batchSize_', nBy,
                    '.RData',sep='')
 

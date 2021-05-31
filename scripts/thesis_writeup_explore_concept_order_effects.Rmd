@@ -1,0 +1,340 @@
+---
+title: "thesis_writeup"
+output: bookdown::html_document2
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r load-all-libraries, message=FALSE, warning=FALSE, results=FALSE}
+
+# Clean the environment
+rm(list=ls())
+
+# Load libraries
+library(tidyverse)
+library(readxl)
+library(ggpubr)
+library(rstatix)
+library(emmeans)
+library(BayesFactor)
+library(DT)
+library(kableExtra)
+library(assortedRFunctions)
+library(TOSTER)
+
+# Source other scripts
+source('./utils/load_transform_gather.R')
+
+```
+
+# Load and get the datasets ready
+
+```{r load-transform-gather-filter-qc, message=FALSE}
+
+outList <- load_transform_gather()
+
+long_form_data_all_ptp_analyzed <- 
+    outList$long_form_data_all_ptp_analyzed
+long_form_data_qc_pass_ptp_analyzed <- 
+    outList$long_form_data_qc_pass_ptp_analyzed
+
+results_table_all_ptp_analyzed <- 
+        outList$results_table_all_ptp_analyzed
+results_table_qc_pass_ptp_analyzed <- 
+    outList$results_table_qc_pass_ptp_analyzed
+results_table_qc_pass_ptp_analyzed_gathered <- 
+    outList$results_table_qc_pass_ptp_analyzed_gathered
+
+rm(outList)
+
+```
+
+
+
+# Plots for experiment 1:
+
+
+```{r define-flags}
+
+which_expt <- 1
+
+```
+
+# Looking at the difference between concept order?
+
+```{r congruency-effect-concept-order}
+
+results_table_qc_pass_ptp_analyzed %>%
+        filter(experiment == which_expt) %>%
+        ggplot(aes(x=congruency,
+                   y=phase_2_min_phase_1_ses_1_2_perf,
+                   fill=congruency)) + 
+        geom_boxplot(width=0.5,notch = TRUE,outlier.shape = NA) + 
+        # geom_point(pch=21,
+        #            position = position_jitterdodge(dodge.width=0.5,
+        #                                            jitter.width=0.1)) +
+        geom_dotplot(binaxis='y', stackdir='center',
+                     stackratio=1, dotsize=0.7, fill="black") +
+        stat_summary(fun=mean, geom="point", shape=20, size=5, color="red", fill="red") +    
+        ylab("Plase 2 - Phase 1") + 
+        theme(axis.text.x = element_text(size=10),
+              axis.text.y = element_text(size=10)) +
+        scale_x_discrete(labels=c('Incongruent','Congruent')) +
+        scale_fill_manual(values=c('#e5f5f9','#2ca25f')) + 
+        theme(legend.position="none",
+              axis.title.x=element_blank()) + 
+        facet_wrap(~concept_phase_1)
+# ,
+#                    labeller = labeller(arr_phase_1_name = c("1" = "Start with Arr1",
+#                                                          "2" = "Start with Arr2")))
+
+# Basic summary table
+results_table_qc_pass_ptp_analyzed %>%
+        filter(experiment == which_expt) %>%
+        group_by(concept_phase_1,congruency) %>%
+        get_summary_stats(phase_2_min_phase_1_ses_1_2_perf, type = 'mean_sd') %>%
+        knitr::kable(caption = 'Expt1: concept order effect on congruency') %>%
+        kable_styling(bootstrap_options = "striped")
+
+# Bayes factor analysis
+
+data_neck_legs_space_c1 <- results_table_qc_pass_ptp_analyzed %>%
+    filter(concept_phase_1 == 'neck_legs_space' & congruency == 1) %>%
+    select(phase_2_min_phase_1_ses_1_2_perf) %>% .[[1]]
+data_neck_legs_space_c0 <- results_table_qc_pass_ptp_analyzed %>%
+    filter(concept_phase_1 == 'neck_legs_space' & congruency == 0) %>%
+    select(phase_2_min_phase_1_ses_1_2_perf) %>% .[[1]]
+data_beak_tail_space_c1 <- results_table_qc_pass_ptp_analyzed %>%
+    filter(concept_phase_1 == 'beak_tail_space' & congruency == 1) %>%
+    select(phase_2_min_phase_1_ses_1_2_perf) %>% .[[1]]
+data_beak_tail_space_c0 <- results_table_qc_pass_ptp_analyzed %>%
+    filter(concept_phase_1 == 'beak_tail_space' & congruency == 0) %>%
+    select(phase_2_min_phase_1_ses_1_2_perf) %>% .[[1]]
+
+# Run the bayesian analysis
+
+BF_neck_legs_space_first <- ttestBF(
+    data_neck_legs_space_c1,
+    data_neck_legs_space_c0,    
+    paired = FALSE
+) %>% reportBF(4)
+BF_beak_tail_space_first <- ttestBF(
+    data_beak_tail_space_c1,
+    data_beak_tail_space_c0,    
+    paired = FALSE
+) %>% reportBF(4)
+
+
+
+```
+
+
+## The basic congruency effect, broken in phases, concept order
+
+```{r congruency-effect-expt-1-by-phases-by-arrangements, fig.width=5}
+results_table_qc_pass_ptp_analyzed_gathered %>% 
+        filter(experiment == which_expt) %>%
+        ggplot(aes(x=congruency,
+                   y=ses_1_2_perf,
+                   fill=phase)) +
+        geom_boxplot(width=0.5,notch=TRUE,outlier.shape = NA) + 
+        geom_point(pch=21,
+                   position = position_jitterdodge(dodge.width=0.5,
+                                                   jitter.width=0.05)) +
+        ylab("Percent correct in sessions 1&2") + 
+        theme(axis.text.x = element_text(size=10),
+              axis.text.y = element_text(size=10),
+              axis.title.x=element_blank(),
+              legend.position = 'top') + 
+        scale_fill_manual(values=c('#045a8d','#d0d1e6'),
+                          name=element_blank(),
+                          labels=c('Phase 1','Phase 2')) + 
+        scale_x_discrete(labels=c('Incongruent','Congruent')) + 
+        facet_wrap(~concept_phase_1)
+# ,
+#                    labeller = labeller(arr_phase_1_name = c("1" = "Start with Arr1",
+                                                 # "2" = "Start with Arr2")))
+
+# Basic summary table
+# results_table_qc_pass_ptp_analyzed_gathered %>%
+#         group_by(experiment,congruency,phase) %>%
+#         get_summary_stats(ses_1_2_perf, type = 'mean_sd') %>%
+#         knitr::kable() %>%
+#         kable_styling(bootstrap_options = "striped")
+```
+
+# Looking at the difference between concept order, while breaking down by arrangement order?
+
+```{r congruency-effect-concept-order-arrangement-order}
+
+results_table_qc_pass_ptp_analyzed %>%
+        filter(experiment == which_expt) %>%
+        ggplot(aes(x=congruency,
+                   y=phase_2_min_phase_1_ses_1_2_perf,
+                   fill=congruency)) + 
+        geom_boxplot(width=0.5,notch = FALSE,outlier.shape = NA) + 
+        # geom_point(pch=21,
+        #            position = position_jitterdodge(dodge.width=0.5,
+        #                                            jitter.width=0.1)) +
+        geom_dotplot(binaxis='y', stackdir='center',
+                     stackratio=1, dotsize=0.7, fill="black") +
+        stat_summary(fun=mean, geom="point", shape=20, size=5, color="red", fill="red") +    
+        ylab("Plase 2 - Phase 1") + 
+        theme(axis.text.x = element_text(size=10),
+              axis.text.y = element_text(size=10)) +
+        scale_x_discrete(labels=c('Incongruent','Congruent')) +
+        scale_fill_manual(values=c('#e5f5f9','#2ca25f')) + 
+        theme(legend.position="none",
+              axis.title.x=element_blank()) + 
+        facet_grid(arr_phase_1_name ~ concept_phase_1)# ,
+#                    labeller = labeller(arr_phase_1_name = c("1" = "Start with Arr1",
+#                                                          "2" = "Start with Arr2")))
+
+
+```
+
+## The basic congruency effect, broken in phases, concept order and arrangement order
+
+```{r congruency-effect-expt-1-by-phases-by-arrangements-by-concept, fig.width=8}
+results_table_qc_pass_ptp_analyzed_gathered %>% 
+        filter(experiment == which_expt) %>%
+        ggplot(aes(x=congruency,
+                   y=ses_1_2_perf,
+                   fill=phase)) +
+        geom_boxplot(width=0.5,notch=FALSE,outlier.shape = NA) + 
+        geom_point(pch=21,
+                   position = position_jitterdodge(dodge.width=0.5,
+                                                   jitter.width=0.05)) +
+        ylab("Percent correct in sessions 1&2") + 
+        theme(axis.text.x = element_text(size=10),
+              axis.text.y = element_text(size=10),
+              axis.title.x=element_blank(),
+              legend.position = 'top') + 
+        scale_fill_manual(values=c('#045a8d','#d0d1e6'),
+                          name=element_blank(),
+                          labels=c('Phase 1','Phase 2')) + 
+        scale_x_discrete(labels=c('Incongruent','Congruent')) + 
+        facet_grid(arr_phase_1_name ~concept_phase_1)
+# ,
+#                    labeller = labeller(arr_phase_1_name = c("1" = "Start with Arr1",
+                                                 # "2" = "Start with Arr2")))
+
+# Basic summary table
+# results_table_qc_pass_ptp_analyzed_gathered %>%
+#         group_by(experiment,congruency,phase) %>%
+#         get_summary_stats(ses_1_2_perf, type = 'mean_sd') %>%
+#         knitr::kable() %>%
+#         kable_styling(bootstrap_options = "striped")
+```
+
+```{r congruency-effect-concept-order-both-expt, fig.width = 10}
+
+results_table_qc_pass_ptp_analyzed_gathered %>% 
+        ggplot(aes(x=congruency,y=ses_1_2_perf,fill=phase)) +
+        geom_boxplot(width=0.5,notch=FALSE,outlier.shape = NA) + 
+        geom_point(pch=21,
+                   position = position_jitterdodge(dodge.width=0.5,
+                                                   jitter.width=0.1)) +
+        # xlab('') +
+        theme(axis.text.x = element_text(size=10),
+              axis.text.y = element_text(size=10)) + 
+        scale_fill_manual(values=c('#045a8d','#d0d1e6'),
+                          name=element_blank(),
+                          labels=c('Phase 1','Phase 2')) + 
+        facet_wrap(~concept_phase_1) +
+        theme(legend.position="top") + 
+        scale_x_discrete(labels=c('Incongruent','Congruent')) +
+        ylab("Percent correct in sessions 1&2")
+
+# Grid display, showing experiment by concept order
+results_table_qc_pass_ptp_analyzed_gathered %>% 
+        ggplot(aes(x=congruency,y=ses_1_2_perf,fill=phase)) +
+        geom_boxplot(width=0.5,notch=FALSE,outlier.shape = NA) + 
+        geom_point(pch=21,
+                   position = position_jitterdodge(dodge.width=0.5,
+                                                   jitter.width=0.1)) +
+        # xlab('') +
+        theme(axis.text.x = element_text(size=10),
+              axis.text.y = element_text(size=10)) + 
+        scale_fill_manual(values=c('#045a8d','#d0d1e6'),
+                          name=element_blank(),
+                          labels=c('Phase 1','Phase 2')) + 
+        theme(legend.position="top") + 
+        scale_x_discrete(labels=c('Incongruent','Congruent')) +
+        ylab("Percent correct in sessions 1&2") + 
+        facet_grid(arrangement_pairs ~ concept_phase_1)
+
+
+# Plot just the BT, diff arrangmenets
+results_table_qc_pass_ptp_analyzed_gathered %>% 
+        filter(concept_phase_1 == 'beak_tail_space') %>%
+        reorder_levels(arr_phase_1_1, order = c("1", "14", "3", "15")) %>%
+        ggplot(aes(x=congruency,y=ses_1_2_perf,fill=phase)) +
+        geom_boxplot(width=0.5,notch=FALSE,outlier.shape = NA) + 
+        geom_point(pch=21,
+                   position = position_jitterdodge(dodge.width=0.5,
+                                                   jitter.width=0.1)) +
+        # stat_summary(fun=mean, geom="point", shape=20, 
+        #              size=5, color="red", fill="red") +
+        ylab("ses 1&2 acc") + 
+        xlab('') +
+        theme(axis.text.x = element_text(size=10),
+              axis.text.y = element_text(size=10)) + 
+        scale_fill_manual(values=c('#045a8d','#d0d1e6'),
+                          name=element_blank(),
+                          labels=c('Phase 1','Phase 2')) + 
+        facet_wrap(~arr_phase_1_1, ncol = 4,
+                   labeller = labeller(arr_phase_1_1 = c("1" = "Arr1",
+                                                         "14" = "Arr2",
+                                                         "3" = "Arr3",
+                                                         "15" = "Arr4"))) +        
+        theme(legend.position="top") + 
+        scale_x_discrete(labels=c('Incongruent','Congruent')) + 
+        ylab("Percent correct in sessions 1&2") + 
+        ggtitle('Beak Tail Space') + 
+        coord_cartesian(ylim=(c(0.5,1.0)))
+
+# Plot just the NL, diff arrangmenets
+results_table_qc_pass_ptp_analyzed_gathered %>% 
+        filter(concept_phase_1 == 'neck_legs_space') %>%
+        reorder_levels(arr_phase_1_1, order = c("1", "14", "3", "15")) %>%
+        ggplot(aes(x=congruency,y=ses_1_2_perf,fill=phase)) +
+        geom_boxplot(width=0.5,notch=FALSE,outlier.shape = NA) + 
+        geom_point(pch=21,
+                   position = position_jitterdodge(dodge.width=0.5,
+                                                   jitter.width=0.1)) +
+        # stat_summary(fun=mean, geom="point", shape=20, 
+        #              size=5, color="red", fill="red") +
+        ylab("ses 1&2 acc") + 
+        xlab('') +
+        theme(axis.text.x = element_text(size=10),
+              axis.text.y = element_text(size=10)) + 
+        scale_fill_manual(values=c('#045a8d','#d0d1e6'),
+                          name=element_blank(),
+                          labels=c('Phase 1','Phase 2')) + 
+        facet_wrap(~arr_phase_1_1, ncol = 4,
+                   labeller = labeller(arr_phase_1_1 = c("1" = "Arr1",
+                                                         "14" = "Arr2",
+                                                         "3" = "Arr3",
+                                                         "15" = "Arr4"))) +        
+        theme(legend.position="top") + 
+        scale_x_discrete(labels=c('Incongruent','Congruent')) + 
+        ylab("Percent correct in sessions 1&2") + 
+        ggtitle('Neck Legs Space') + 
+        coord_cartesian(ylim=(c(0.5,1.0)))
+
+
+
+# Basic summary table
+# results_table_qc_pass_ptp_analyzed_gathered %>%
+#         reorder_levels(arr_phase_1_1, order = c("1", "14", "3", "15")) %>%
+#         group_by(arr_phase_1_1,congruency,phase) %>%
+#         get_summary_stats(ses_1_2_perf, type = 'mean_sd') %>%
+#         knitr::kable() %>%
+#         kable_styling(bootstrap_options = "striped")
+
+```
+
+

@@ -52,7 +52,9 @@ rm(outList)
 ```
 
 
-# Start with the whole data, without QC pass and then with QC pass
+# Experiment 1
+
+## Age and Sex
 
 ```{r age-sex}
 # Sex
@@ -99,10 +101,14 @@ results_table_qc_pass_ptp_analyzed %>%
         kable_styling(bootstrap_options = "striped")
 
 ```
+
+## Why QC Fail:
+
 ```{r why-qc-fail}
 
 results_table_all_ptp_analyzed %>% 
-        subset(data_submitted == 1) %>%
+        subset(data_submitted == 1 & 
+                       experiment == 1) %>%
         group_by(data_submitted,global_pass_incl_phase_2_fails,
                  debrief_qc_pass,fb_int_qc_pass,
                  basic_data_checks_pass,
@@ -111,8 +117,91 @@ results_table_all_ptp_analyzed %>%
         knitr::kable() %>%
         kable_styling(bootstrap_options = "striped")
 
+# Break down how many congruent/incongruent passed QC
+results_table_qc_pass_ptp_analyzed %>%
+        subset(experiment == 1) %>%
+        group_by(congruency) %>%
+        summarize(count = n()) %>%
+        knitr::kable(caption = 'Expt1: N QC Pass by Congruency') %>%
+        kable_styling(bootstrap_options = "striped")
 
 
+
+```
+
+# Experiment 2
+
+## Age and Sex
+
+```{r age-sex}
+# Sex
+results_table_all_ptp_analyzed %>% 
+        subset(data_submitted == 1 & 
+                       status != 'RETURNED' & 
+                       status != 'TIMED-OUT' &
+                       ptp != 'test' & 
+                       progress_state != 'condition not assigned' &
+                       experiment == 2) %>% 
+        group_by(Sex) %>%
+        summarise(count = n()) %>%
+        knitr::kable(caption = 'Expt2: sex, all participants') %>%
+        kable_styling(bootstrap_options = "striped")
+
+# Sex QC pass
+results_table_qc_pass_ptp_analyzed %>% 
+        subset(data_submitted == 1 & status != 'RETURNED' &
+                       experiment == 2) %>% 
+        group_by(Sex) %>%
+        summarise(count = n()) %>%
+        knitr::kable(caption = 'Expt2: sex, QC-pass participants') %>%
+        kable_styling(bootstrap_options = "striped")
+# Age
+results_table_all_ptp_analyzed %>% 
+        subset(data_submitted == 1 & 
+                       status != 'RETURNED' & 
+                       status != 'TIMED-OUT' &
+                       ptp != 'test' & 
+                       progress_state != 'condition not assigned' &
+                       experiment == 2) %>% 
+        # group_by(congruency) %>%
+        get_summary_stats(age, show = c('mean','median','sd','min','max')) %>%
+        knitr::kable(caption = 'Expt2: Age, all participants') %>%
+        kable_styling(bootstrap_options = "striped")
+
+# Age QC pass
+results_table_qc_pass_ptp_analyzed %>% 
+        subset(data_submitted == 1 & status != 'RETURNED' &
+                       experiment == 2) %>% 
+        # group_by(congruency) %>%
+        get_summary_stats(age, show = c('mean','median','sd','min','max')) %>%
+        knitr::kable(caption = 'Expt2: age QC-pass participants') %>%
+        kable_styling(bootstrap_options = "striped")
+
+```
+
+## Why QC Fail:
+
+```{r why-qc-fail}
+
+results_table_all_ptp_analyzed %>% 
+        subset(data_submitted == 1 &
+                       experiment == 2) %>%
+        group_by(data_submitted,global_pass_incl_phase_2_fails,
+                 debrief_qc_pass,fb_int_qc_pass,
+                 basic_data_checks_pass,
+                 phase_1_rt_qc_pass,phase_2_rt_qc_pass) %>%
+        summarize(count = n()) %>%
+        knitr::kable(caption = 'Expt2: QC Fail reasons') %>%
+        kable_styling(bootstrap_options = "striped")
+
+
+# Break down how many congruent/incongruent passed QC
+results_table_qc_pass_ptp_analyzed %>%
+        subset(experiment == 2) %>%
+        group_by(congruency) %>%
+        summarize(count = n()) %>%
+        knitr::kable(caption = 'Expt1: N QC Pass by Congruency') %>%
+        kable_styling(bootstrap_options = "striped")
 
 
 ```
