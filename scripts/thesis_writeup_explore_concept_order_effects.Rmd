@@ -188,9 +188,11 @@ results_table_qc_pass_ptp_analyzed %>%
         scale_fill_manual(values=c('#e5f5f9','#2ca25f')) + 
         theme(legend.position="none",
               axis.title.x=element_blank()) + 
-        facet_grid(arr_phase_1_name ~ concept_phase_1)# ,
-#                    labeller = labeller(arr_phase_1_name = c("1" = "Start with Arr1",
-#                                                          "2" = "Start with Arr2")))
+        facet_grid(arr_phase_1_name ~ concept_phase_1,
+                   labeller = labeller(
+                           arr_phase_1_name = c("1" = "Start with Arr1",
+                                                "2" = "Start with Arr2"))
+                   )
 
 
 ```
@@ -216,10 +218,11 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
                           name=element_blank(),
                           labels=c('Phase 1','Phase 2')) + 
         scale_x_discrete(labels=c('Incongruent','Congruent')) + 
-        facet_grid(arr_phase_1_name ~concept_phase_1)
-# ,
-#                    labeller = labeller(arr_phase_1_name = c("1" = "Start with Arr1",
-                                                 # "2" = "Start with Arr2")))
+        facet_grid(arr_phase_1_name ~ concept_phase_1,
+                   labeller = labeller(
+                           arr_phase_1_name = c("1" = "Start with Arr1",
+                                                "2" = "Start with Arr2"))
+                   )
 
 # Basic summary table
 # results_table_qc_pass_ptp_analyzed_gathered %>%
