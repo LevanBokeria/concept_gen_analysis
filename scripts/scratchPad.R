@@ -1,3 +1,32 @@
+library(ggplot2)
+library(dplyr)
+
+set.seed(1)
+
+some_data <- data.frame(factor_1 = c("0", "1"),
+                        some_outcome = rnorm(200))
+
+some_data %>%
+        ggplot(aes(x=factor_1,
+                   y=some_outcome)) + 
+        geom_boxplot(width = 0.2, notch = TRUE)
+
+some_data %>%
+        ggplot(aes(x=factor_1,
+                   y=some_outcome)) + 
+        geom_boxplot(width = 0.2, notch = TRUE) + 
+        scale_x_discrete(expand = c(2,2))
+
+some_data %>%
+        ggplot(aes(x=factor_1,
+                   y=some_outcome)) + 
+        geom_boxplot(width = 0.5, notch = TRUE) +
+        theme(plot.margin = margin(10, 150, 10, 150))
+
+some_data %>%
+        ggplot(aes(x=factor_1,
+                   y=some_outcome)) + 
+        geom_boxplot(width = 0.4, notch = TRUE)
 
 
 
@@ -6,19 +35,24 @@
 
 
 
-############## EFFECT SIZES within vs between for Rob #########################
-within_stats <- results_table_qc_pass_ptp_analyzed %>%
-        group_by(arrangement_pairs, congruency) %>%
-        get_summary_stats(phase_2_min_phase_1_ses_1_2_perf, type = 'mean_sd')
 
 
-within_stats$effect_size <- within_stats$mean/within_stats$sd
-
-arr_1_2_between_effect <- (within_stats$mean[2] - within_stats$mean[1]) / 
-        ((within_stats$sd[2] + within_stats$sd[1])/2)
-
-arr_3_4_between_effect <- (within_stats$mean[4] - within_stats$mean[3]) / 
-        ((within_stats$sd[4] + within_stats$sd[3])/2)
+# 
+# 
+# 
+# ############## EFFECT SIZES within vs between for Rob #########################
+# within_stats <- results_table_qc_pass_ptp_analyzed %>%
+#         group_by(arrangement_pairs, congruency) %>%
+#         get_summary_stats(phase_2_min_phase_1_ses_1_2_perf, type = 'mean_sd')
+# 
+# 
+# within_stats$effect_size <- within_stats$mean/within_stats$sd
+# 
+# arr_1_2_between_effect <- (within_stats$mean[2] - within_stats$mean[1]) / 
+#         ((within_stats$sd[2] + within_stats$sd[1])/2)
+# 
+# arr_3_4_between_effect <- (within_stats$mean[4] - within_stats$mean[3]) / 
+#         ((within_stats$sd[4] + within_stats$sd[3])/2)
         
 
 

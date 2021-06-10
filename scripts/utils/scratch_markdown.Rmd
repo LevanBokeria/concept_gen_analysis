@@ -1,0 +1,45 @@
+---
+title: "testing"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, fig.width=4, fig.height=6}
+
+library(ggplot2)
+library(dplyr)
+
+set.seed(1)
+
+some_data <- data.frame(factor_1 = c("0", "1"),
+                        some_outcome = rnorm(200))
+
+some_data %>%
+  ggplot(aes(x=factor_1,
+             y=some_outcome)) + 
+  geom_boxplot(width = 0.2, notch = TRUE)
+
+some_data %>%
+  ggplot(aes(x=factor_1,
+             y=some_outcome)) + 
+  geom_boxplot(width = 0.2, notch = TRUE) + 
+        scale_x_discrete(expand = c(2,2))
+
+some_data %>%
+  ggplot(aes(x=factor_1,
+             y=some_outcome)) + 
+  geom_boxplot(width = 0.5, notch = TRUE) +
+  theme(plot.margin = margin(10, 150, 10, 150))
+
+some_data %>%
+  ggplot(aes(x=factor_1,
+             y=some_outcome)) + 
+  geom_boxplot(width = 0.4, notch = TRUE) + 
+  geom_dotplot(binaxis='y', stackdir='center',
+  stackratio=1, dotsize=0.4, fill="black")
+
+```
+

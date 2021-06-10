@@ -21,16 +21,16 @@ load_transform_gather <- function(){
 
         # Read the excel files
         results_table_all_ptp_analyzed <- read_csv(
-                'C:/Users/levan/GitHub/concept_gen_analysis/results/analysis/results_table_all_ptp_analyzed.csv') %>%
+                '../results/analysis/results_table_all_ptp_analyzed.csv') %>%
                 as_tibble()
         
         long_form_data_all_ptp_analyzed <- read_csv(
-                'C:/Users/levan/GitHub/concept_gen_analysis/results/analysis/long_form_data_all_ptp_analyzed.csv') %>%
+                '../results/analysis/long_form_data_all_ptp_analyzed.csv') %>%
                 as_tibble()
         
         prolific_meta_data <- 
                 read_excel(
-                r'(C:\Users\levan\GitHub\concept_gen_analysis\data\prolific_meta_data\united_meta_data.xlsx)',
+                r'(../data/prolific_meta_data/united_meta_data.xlsx)',
                 sheet = 1) %>%
                 as_tibble()
         

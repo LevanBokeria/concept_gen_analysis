@@ -65,19 +65,19 @@ which_expt <- 1
 
 ## The Basic congruency effect:
 
-```{r congruency-effect-expt-1, fig.width=5}
+```{r congruency-effect-expt-1, fig.width=3, fig.height=3}
 
 results_table_qc_pass_ptp_analyzed %>%
         filter(experiment == which_expt) %>%
         ggplot(aes(x=congruency,
                    y=phase_2_min_phase_1_ses_1_2_perf,
                    fill=congruency)) + 
-        geom_boxplot(width=0.2,notch = TRUE,outlier.shape = NA) + 
+        geom_boxplot(width=0.6,notch = TRUE,outlier.shape = NA) + 
         # geom_point(pch=21,
         #            position = position_jitterdodge(dodge.width=0.5,
         #                                            jitter.width=0.1)) +
         geom_dotplot(binaxis='y', stackdir='center',
-                     stackratio=1, dotsize=0.7, fill="black") +
+                     stackratio=1, dotsize=0.6, fill="black") +
         stat_summary(fun=mean, geom="point", shape=20, size=5, color="red", fill="red") +    
         ylab("Plase 2 - Phase 1") + 
         theme(axis.text.x = element_text(size=10),
