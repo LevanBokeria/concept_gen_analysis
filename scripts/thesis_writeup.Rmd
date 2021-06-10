@@ -318,6 +318,82 @@ long_form_data_qc_pass_ptp_analyzed %>%
 
 
 
+
+
+
+
+
+## ANOVA 3-way: congruency, concept order, arrangement order
+
+```{r expt1-anova-3-way}
+
+# Compute the mean and the standard deviation (SD) of pain_score by groups:
+results_table_qc_pass_ptp_analyzed %>%  
+        filter(experiment == which_expt) %>%
+        group_by(congruency, arr_phase_1_name, concept_phase_1) %>%
+        get_summary_stats(phase_2_min_phase_1_ses_1_2_perf, type = "mean_sd")
+
+# Identify outliers
+results_table_qc_pass_ptp_analyzed %>%  
+        filter(experiment == which_expt) %>%
+        group_by(congruency, arr_phase_1_name, concept_phase_1) %>%
+        identify_outliers(phase_2_min_phase_1_ses_1_2_perf)
+
+# Normality tests and assumptions
+model  <- results_table_qc_pass_ptp_analyzed %>%
+        filter(experiment == which_expt) %>%
+        lm(phase_2_min_phase_1_ses_1_2_perf ~ 
+                     congruency*
+                     arr_phase_1_name*
+                     concept_phase_1, data = .)
+
+# QQ plot
+ggqqplot(residuals(model))
+
+# Create a QQ plot of residuals
+ggqqplot(residuals(model))
+
+# Compute Shapiro-Wilk test of normality
+shapiro_test(residuals(model))
+
+# QQ plots for each cell
+results_table_qc_pass_ptp_analyzed %>%  
+        filter(experiment == which_expt) %>%
+        group_by(congruency, arr_phase_1_name, concept_phase_1) %>%
+        ggqqplot("phase_2_min_phase_1_ses_1_2_perf", ggtheme = theme_bw()) +
+        facet_grid(congruency + concept_phase_1 ~ arr_phase_1_name, 
+                   labeller = "label_both")
+
+# Homogeneity of variance
+results_table_qc_pass_ptp_analyzed %>%  
+        filter(experiment == which_expt) %>%
+        levene_test(phase_2_min_phase_1_ses_1_2_perf ~ 
+                            congruency*
+                            arr_phase_1_name*
+                            concept_phase_1)
+
+
+# Do the test of normality by each group
+results_table_qc_pass_ptp_analyzed %>%  
+        filter(experiment == which_expt) %>%
+        group_by(congruency, arr_phase_1_name, concept_phase_1) %>%
+        shapiro_test(phase_2_min_phase_1_ses_1_2_perf)
+
+
+
+aov_3_expt_1 <- results_table_qc_pass_ptp_analyzed %>%
+        filter(experiment == which_expt) %>%
+        anova_test(
+        phase_2_min_phase_1_ses_1_2_perf ~
+                congruency*concept_phase_1*arr_phase_1_name)
+aov_3_expt_1 %>%
+        knitr::kable(caption = 'Expt1: congruency -X- concept -X- arrangement') %>%
+        kable_styling(bootstrap_options = "striped")
+
+
+```
+
+
 # Plots for experiment 2:
 
 
