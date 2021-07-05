@@ -15,7 +15,8 @@ get_only_qc_pass = function(dataIn){
                                  fb_int_qc_pass                 == 1 & 
                                  phase_1_rt_qc_pass             == 1 & 
                                  phase_2_rt_qc_pass             == 1 &
-                                 basic_data_checks_pass         == 1)
+                                 basic_data_checks_pass         == 1) %>%
+                droplevels()
 
         return(dataIn)
 }

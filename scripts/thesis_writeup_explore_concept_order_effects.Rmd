@@ -101,16 +101,21 @@ results_table_qc_pass_ptp_analyzed %>%
 # Bayes factor analysis
 
 data_neck_legs_space_c1 <- results_table_qc_pass_ptp_analyzed %>%
-    filter(concept_phase_1 == 'neck_legs_space' & congruency == 1) %>%
+    filter(experiment == which_expt & 
+               concept_phase_1 == 'neck_legs_space' & 
+               congruency == 1) %>%
     select(phase_2_min_phase_1_ses_1_2_perf) %>% .[[1]]
 data_neck_legs_space_c0 <- results_table_qc_pass_ptp_analyzed %>%
-    filter(concept_phase_1 == 'neck_legs_space' & congruency == 0) %>%
+    filter(experiment == which_expt & 
+               concept_phase_1 == 'neck_legs_space' & congruency == 0) %>%
     select(phase_2_min_phase_1_ses_1_2_perf) %>% .[[1]]
 data_beak_tail_space_c1 <- results_table_qc_pass_ptp_analyzed %>%
-    filter(concept_phase_1 == 'beak_tail_space' & congruency == 1) %>%
+    filter(experiment == which_expt & 
+               concept_phase_1 == 'beak_tail_space' & congruency == 1) %>%
     select(phase_2_min_phase_1_ses_1_2_perf) %>% .[[1]]
 data_beak_tail_space_c0 <- results_table_qc_pass_ptp_analyzed %>%
-    filter(concept_phase_1 == 'beak_tail_space' & congruency == 0) %>%
+    filter(experiment == which_expt & 
+               concept_phase_1 == 'beak_tail_space' & congruency == 0) %>%
     select(phase_2_min_phase_1_ses_1_2_perf) %>% .[[1]]
 
 # Run the bayesian analysis
