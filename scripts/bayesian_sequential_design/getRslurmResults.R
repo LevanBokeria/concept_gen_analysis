@@ -1,4 +1,6 @@
-# This is a script reading the output from the rslurm for the talk Bayesian sequential designs Wed 29 July 2020
+# This is a script reading the output from the rslurm.
+# Organizes the output into a dataframe, where each row is a BF analysis after 
+# each batch acquisition.
 
 # clear things
 rm(list=ls())

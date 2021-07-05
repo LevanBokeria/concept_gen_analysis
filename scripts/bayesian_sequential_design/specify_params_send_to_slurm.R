@@ -1,3 +1,11 @@
+# Description:
+
+# This is the main script where you setup simulation parameters, and they get
+# passed to slurm to perform fast computation.
+
+# After slurm is done with the results, use script getRSlurmResults.R to extract
+# results into a readable format.
+
 # Setting seed
 set.seed(911225)
 
@@ -29,7 +37,7 @@ saveFolder <- paste('d1_', d1, '_limpg_', nLimit,
                     '_batchSize_', batchSize, sep='')
 
 # Submit slurm job?
-submitJob = TRUE
+submitJob = FALSE
 
 # Function
 helperfunction <- function(minN, d, crit1, crit2, batchSize, limit){
@@ -75,5 +83,6 @@ params      <- data.frame(minN      = rep(minN, nIter*2),
 
 # Create job
 sjob1 <- slurm_apply(helperfunction, params, jobname = saveFolder,
-                     nodes = n_nodes, cpus_per_node = cpus_per_node, submit = submitJob)
+                     nodes = n_nodes, cpus_per_node = cpus_per_node, 
+                     submit = submitJob)
 

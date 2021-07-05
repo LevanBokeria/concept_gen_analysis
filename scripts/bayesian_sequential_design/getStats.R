@@ -8,17 +8,14 @@ rm(list=ls())
 # Libraries
 library(ggplot2)
 library(gganimate)
-# library(gifski)
 library(gapminder)
 library(gridExtra)
 library(grid)
-# library(MRColour)
 library(plyr)
 library(BayesFactor)
 library(assortedRFunctions)
 
 # Standard values
-
 crit1        <- 10
 crit2        <- 1/6
 
