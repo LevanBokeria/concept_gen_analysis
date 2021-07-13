@@ -19,8 +19,8 @@ library(tidyverse)
 library(glue)
 library(rio)
 
-source('./bayesian_sequential_design/getRslurmResults.R')
-source('./bayesian_sequential_design/getStats.R')
+source('./utils/bayesian_sequential_design/getRslurmResults.R')
+source('./utils/bayesian_sequential_design/getStats.R')
 
 # Define global variables
 nIter   <- 10000
