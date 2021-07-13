@@ -3,7 +3,7 @@
 # original simulations,
 # this function can calculate stats many hypothetical max Ns specified.
 
-# Clear the environment
+# Clear the environment, load libraries ######################################
 rm(list=ls())
 
 # Libraries
@@ -11,9 +11,9 @@ library(plyr)
 library(assortedRFunctions)
 library(tidyverse)
 
-# Define global variables
+# Define global variables ###################################################
 
-nIterEv <- 10000
+nIterEv <- 2000 # maybe the original simulation ran 10,000, but we want less?
 d1      <- 0.5
 d1_str  <- '05'
 nLimit  <- 200
@@ -21,7 +21,7 @@ crit1   <- 6
 crit2   <- 1/6
 
 nFrom <- 56
-nTo   <- 80
+nTo   <- 64
 nBy   <- 8
 minN  <- 24
 
@@ -29,8 +29,11 @@ altNs   <- seq(nFrom,nTo,by = nBy)
 
 saveOutData <- T
 
-# Construct a function to get stats from simulations 
-loadFile  <- paste('_rslurm_d1_',
+
+# Start main script ############################################################
+
+loadFile  <- paste('rslurm_raw_and_preprocessed/',
+                   '_rslurm_d1_',
                    d1_str,'_limpg_',nLimit, '_crit1_', crit1,
                    '_minN_', minN, '_batchSize_', nBy,
                    '/simulationResults_',d1_str,'_limpg_',nLimit, 
@@ -38,19 +41,21 @@ loadFile  <- paste('_rslurm_d1_',
                    '_minN_', minN, '_batchSize_', nBy,
                    '.RData',sep='')
 
+print(getwd())
 # load data
 load(loadFile)
 
-getStats <- function(tempDF){
+# Construct a function to get stats from simulations 
+getStats <- function(data){
     
     # What IDs do we have?
-    simIDs <- unique(tempDF$id)
+    simIDs <- unique(data$id)
     
     # How many IDs are we going to analyze?
     simIDAnalyzed <- simIDs[1:nIterEv]
     
     # Whats the effect size?
-    iEffect <- tempDF$d[1]
+    iEffect <- data$d[1]
     
     print(paste('d=',iEffect,sep=''))
     
@@ -62,7 +67,7 @@ getStats <- function(tempDF){
                            und  = numeric(length(altNs)))  
     
     # Add row indices
-    tempDF$rowIdx <- 1:nrow(tempDF)
+    data$rowIdx <- 1:nrow(data)
     
     # Create a data frame to store results of simulations for various max N
     bf_maxN        <- data.frame(rowIdx = 1:nIterEv)
@@ -90,11 +95,11 @@ getStats <- function(tempDF){
                 print(paste('d=', iEffect,' iN=',iN,' iID=',iID,sep=''))
             }
             
-            getRow <- tempDF[tempDF$n <= iN & 
-                                 tempDF$id == iID,]$rowIdx
+            getRow <- data[data$n <= iN & 
+                                 data$id == iID,]$rowIdx
             getRow <- getRow[length(getRow)]
             
-            bf_maxN[colName][counterID,] <- tempDF$bf[getRow]
+            bf_maxN[colName][counterID,] <- data$bf[getRow]
             
             counterID <- counterID + 1
             
@@ -124,22 +129,24 @@ getStats <- function(tempDF){
     
 } # function getStats
 
-tempDF1 <- subset(df3, d == 0)
-outData1 <- getStats(tempDF1)
+outData_d0 <- df %>%
+    subset(d == 0) %>%
+    getStats()
 
-tempDF2 <- subset(df3, d == d1)
-outData2 <- getStats(tempDF2)
+outData_d1 <- df %>%
+    subset(d == d1) %>%
+    getStats()
 
 # # Save outData
 
-saveNameOutData <- paste('./resultsByManyNs_d_', d1_str,
+saveNameOutData <- paste('.analysis_output/resultsByManyNs_d_', d1_str,
                          '_crit1_', crit1, '_',
                          altNs[1], '_to_', altNs[length(altNs)],
                          '_by_', nBy,
                          '.RData',sep='')
 
 if (saveOutData){
-  save(outData1, outData2, file = saveNameOutData)
+  save(outData_d0, outData_d1, file = saveNameOutData)
 }
 
 

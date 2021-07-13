@@ -19,8 +19,8 @@ library(tidyverse)
 library(glue)
 library(rio)
 
-source('./utils/bayesian_sequential_design/getRslurmResults.R')
-source('./utils/bayesian_sequential_design/getStats.R')
+source('./utils/getRslurmResults.R')
+source('./utils/getStats.R')
 
 # Define global variables
 nIter   <- 10000
@@ -51,8 +51,7 @@ outData <- getStats(df,crit1,crit2,nIter,d1_str,d1,nLimit)
 
 
 # Save outData ################################################################
-loadFolder <- paste('bayesian_sequential_design/',
-                    'rslurm_raw_and_preprocessed/',
+loadFolder <- paste('rslurm_raw_and_preprocessed/',
                     '_rslurm_d1_',d1_str,'_limpg_',
                     nLimit, '_crit1_', crit1, '_minN_', minN,
                     '_batchSize_', batchSize, sep='')

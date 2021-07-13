@@ -3,8 +3,7 @@
 # each batch acquisition.
 getRslurmResults <- function (nIter,d1_str,nLimit,crit1,saveDF,readDF){
         
-        loadFolder <- paste('bayesian_sequential_design/',
-                'rslurm_raw_and_preprocessed/',
+        loadFolder <- paste('rslurm_raw_and_preprocessed/',
                 '_rslurm_d1_',d1_str,'_limpg_',
                 nLimit, '_crit1_', crit1, '_minN_', minN,
                 '_batchSize_', batchSize, sep='')

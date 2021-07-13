@@ -5,8 +5,7 @@ getStats <- function(data,crit1,crit2,nIter,d1_str,d1,nLimit){
         
         if(missing(data)){
                 
-                loadFile  <- paste('bayesian_sequential_design/',
-                                   'rslurm_raw_and_preprocessed/',
+                loadFile  <- paste('rslurm_raw_and_preprocessed/',
                                    '_rslurm_d1_',
                                    d1_str,'_limpg_',nLimit, '_crit1_', crit1, 
                                    '_minN_', minN,
