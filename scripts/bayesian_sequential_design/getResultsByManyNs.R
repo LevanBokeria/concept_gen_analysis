@@ -13,15 +13,15 @@ library(tidyverse)
 
 # Define global variables ###################################################
 
-nIterEv <- 2000 # maybe the original simulation ran 10,000, but we want less?
+nIterEv <- 10000 # maybe the original simulation ran 10,000, but we want less?
 d1      <- 0.5
 d1_str  <- '05'
 nLimit  <- 200
 crit1   <- 6
 crit2   <- 1/6
 
-nFrom <- 56
-nTo   <- 64
+nFrom <- 24
+nTo   <- 200
 nBy   <- 8
 minN  <- 24
 
@@ -139,7 +139,7 @@ outData_d1 <- df %>%
 
 # # Save outData
 
-saveNameOutData <- paste('.analysis_output/resultsByManyNs_d_', d1_str,
+saveNameOutData <- paste('analysis_output/resultsByManyNs_d_', d1_str,
                          '_crit1_', crit1, '_',
                          altNs[1], '_to_', altNs[length(altNs)],
                          '_by_', nBy,
