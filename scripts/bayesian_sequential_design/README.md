@@ -6,11 +6,11 @@ This will send a job to cluster. The output will be saved in a new folder in the
 
 2. getResultsWrapper.R
 
-This script will load the output of the cluster, and calculate the probabilities of supporting H1 or H0 depending on effect size specified in the simulations. It saves this output in the same folder as the simulation results. Just open the file to see the probabilities of supporting H1 and H0.
+This script will load the specified output of the cluster, and calculate the probabilities of supporting H1 or H0 depending on effect size and maxN specified in the simulation. It saves this output in the same folder as the simulation results. Just open the file that is saved, to see the probabilities of supporting H1 and H0.
 
 3. getResultsByManyNs.R
 
-This script allowes one to examine the probabilities of supporting H1/H0 at multiple maximum N per group. It will take some cluster simulation result with, for example, 200 participants per group. That result already has all the information we need for examining probabilities of supporting H1/H0 at whatever n per group we want, as long as its less than 200 and a multiple of batch-size that the simulation used. The output is saved in "./analysis_output"
+This script allows one to examine the probabilities of supporting H1/H0/undecided at multiple maximum N per group. It will take some cluster simulation result with, for example, 200 participants per group. That result already has all the information we need for examining probabilities of supporting H1/H0/undecided at whatever n per group we want, as long as its less than 200 and a multiple of batch-size that the simulation used. The output is saved in "./analysis_output"
 
 4. plotPowerByN.R
 
@@ -26,14 +26,13 @@ Where results from various analysis go. For example, output of getResultsByManyN
 bayesianSequentialDesign-master:
 Alex Quent's repository that contained the original scripts for bayesian sequential design.
 
-power_by_n_plots:
+power_by_n_plots: some older plots of power by various maxN per group. The new plotting script doesn't save images.
 
 quickSimResults:
-Folder that stores results from quickBayesSim.R script, where you can just set 
-maxN per group, n-simulations, and run a for loop to see the "power" to support H1 or H0, without doing any sequential analysis.
+Folder that stores results from quickBayesSim.R script, where you can just set maxN per group, n-simulations, and run a for loop to see the "power" to support H1 or H0, without doing any sequential analysis.
 
 rslurm_raw_and_preprocessed:
-files that are the output of rslurm simulations ran on the CBU server. This folder also contains files as a result of preprocessing those slurm simulations into a nice dataframe.
+files that are the output of rslurm simulations ran on the CBU server. The cluster output is automatically saved in the working directory, so then you should manually copy those folders to this 'rslurm_raw_and_preprocessed' folder. This folder also contains files as a result of preprocessing those slurm simulations into a nice dataframe, using the getResultsWrapper.R script.
 
 utils:
 folder containing various helper functions.
