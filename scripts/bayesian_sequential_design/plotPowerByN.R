@@ -1,6 +1,6 @@
-# This script will plot the power by various max N per group
+# This script will plot the power by various max N per group 
 
-# Clear the environment
+# Clear the environment and load libraries, etc ###############################
 rm(list=ls())
 
 # Libraries
@@ -8,8 +8,9 @@ library(ggplot2)
 library(gapminder)
 library(plyr)
 library(tidyverse)
+library(rio)
 
-# Define global variables
+# Define global variables ####################################################
 
 nIterEv <- 10000
 d1      <- 0.5
@@ -18,58 +19,38 @@ nLimit  <- 200
 crit1   <- 6
 crit2   <- 1/6
 
-nFrom <- 80
-nTo   <- 128
+nFrom <- 24
+nTo   <- 200
 nBy   <- 8
 
 altNs   <- seq(nFrom,nTo,by = nBy)
 
-saveFig <- T
+saveFig <- F
 
-# Construct a function to get stats from simulations 
-loadFile  <- paste('resultsByManyNs_d_',
+# Load the file
+loadFile  <- paste('analysis_output/',
+                   'resultsByManyNs_d_',
                    d1_str,
                    '_crit1_', crit1, '_',
                    altNs[1], '_to_', altNs[length(altNs)],
                    '_by_', nBy,
                    '.RData',sep='')
 
-# load data
 load(loadFile)
 
-outStats1 <- outData1$outStats
-outStats2 <- outData2$outStats
+# Get all the data in one dataframe
+all_data <- rbind(outData_d1$outStats,outData_d0$outStats)
 
-plotStats <- function(dataPlotted){
-  
-  d_plotted <- dataPlotted$d[1]
-  
-  if (saveFig){
-    png(file=paste('./power_by_n_plots/power_by_n_d_', d_plotted,
-                   '_BF10_', crit1, '_BF01_', 1/crit2,'_',
-                   altNs[1], '_to_', altNs[length(altNs)],
-                   '_by_', nBy,
-                   '.png',
-                   sep=''))
-  }
-  
-  matplot(dataPlotted[,3:5], type = c("b"), pch=1,col = 3:5, lwd = 2,
-          xaxt="n",yaxt="n",
-          main=paste('d=', d_plotted, ' BF10=', crit1, ' BF01=', 1/crit2, sep=''),
-          xlab='N per group', ylab='% simulations')
-  legend("topleft", legend = c('H0','H1','Und'), col=3:5, pch=1,cex = 0.7) # optional legend
-  
-  grid(nx = NULL, ny = NULL, col = "lightgray", lty = "dotted",
-       lwd = par("lwd"), equilogs = TRUE)
-  
-  axis(side=1,at=1:nrow(dataPlotted),labels=paste(dataPlotted$maxN))
-  axis(side=2,at=seq(0,10000,by=1000),labels=paste(seq(0,100,by=10)),cex.axis=1)
-  
-  if (saveFig){
-    dev.off()
-  }
-  
-}
-
-plotStats(outStats1)
-plotStats(outStats2)
+# Start plotting #############################################################
+all_data %>%
+    pivot_longer(c('H1','H0','und'),names_to = 'supports',values_to = 'n_sim') %>% 
+    mutate(supports = as.factor(supports),
+           d = as.factor(d),
+           percent_support = n_sim/100) %>%
+    ggplot(aes(x=maxN,y=percent_support,fill=supports,color=supports)) +
+    geom_line() +
+    geom_point() + 
+    ylab('% of simulations') +
+    xlab('max N per group') + 
+    facet_wrap(~d, labeller = label_both) + 
+    ggtitle(paste('BF10=',crit1,', BF01=',1/crit2,sep=''))
