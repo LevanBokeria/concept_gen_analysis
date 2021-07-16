@@ -48,3 +48,7 @@ Code I was playing with when thinking that we'd need to simulated repeated measu
 quickBayesSim.R:
 If you want to quickly see the "power" to support H1 or H0 depending on real effect size, this script will run N simulations with a set maxN participants. It doesn't do a sequential analysis, just a one-shot analysis with maxN, repeated as many times as you'd like. Its rather slow but OK.
 
+getResultsByMaxN.R
+
+Older script, might not be working. 
+

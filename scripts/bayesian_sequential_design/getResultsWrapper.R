@@ -33,15 +33,15 @@ minN    <- 24
 batchSize <- 8
 
 
-readDF <- FALSE # if DF was saved previously, just read it without recreating it
+readDF <- T # if DF was saved previously, just read it without recreating it
 
 if (readDF){
-        saveDF <- FALSE # should df be saved? If already done, assign FALSE        
+        saveDF <- F # should df be saved? If already done, assign FALSE        
 } else {
-        saveDF <- TRUE
+        saveDF <- T
 }
 
-saveOutData <- TRUE # save the resulting table containing probabilities of H1 and H0?
+saveOutData <- F # save the resulting table containing probabilities of H1 and H0?
 
 # Call the function to construct a dataframe from slurm results ################
 df <- getRslurmResults(nIter,d1_str,nLimit,crit1,saveDF,readDF)

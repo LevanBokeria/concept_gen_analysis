@@ -41,7 +41,6 @@ loadFile  <- paste('rslurm_raw_and_preprocessed/',
                    '_minN_', minN, '_batchSize_', nBy,
                    '.RData',sep='')
 
-print(getwd())
 # load data
 load(loadFile)
 
