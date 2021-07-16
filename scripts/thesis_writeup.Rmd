@@ -406,6 +406,30 @@ pwc %>%
 
 
 ```
+## ANOVA (Bayesian) 3-way: congruency, concept order, arrangement
+
+```{r anova-bayesian-expt1}
+
+data_for_bayes_anova <- results_table_qc_pass_ptp_analyzed %>% 
+        filter(experiment == which_expt)
+
+bayes_aov <- anovaBF(phase_2_min_phase_1_ses_1_2_perf~
+                             congruency*
+                             concept_phase_1*
+                             arr_phase_1_name,
+                     data = data_for_bayes_anova,
+                     whichModels = 'withmain',
+                     whichRandom = 'ptp',
+                     iterations = 100000)
+
+bayes_aov <- sort(bayes_aov, decreasing = TRUE)
+
+bayes_aov %>% knitr::kable() %>%
+        kable_styling(bootstrap_options = "striped")
+
+```
+
+
 
 
 # Plots for experiment 2:
@@ -594,6 +618,7 @@ BF_arr_4_first <- ttestBF(
 
 
 ```
+
 ## The basic congruency effect, broken in phases, arrangement order
 
 ```{r congruency-effect-expt-2-by-phases-by-arrangements, fig.width=5}
@@ -669,14 +694,31 @@ long_form_data_qc_pass_ptp_analyzed %>%
 
 ```
 
+## ANOVA (Bayesian) 3-way: congruency, concept order, arrangement
 
-# ##############################################################################
-# ##############################################################################
-# ##############################################################################
-# ##############################################################################
-# ##############################################################################
+```{r anova-bayesian-expt2}
 
-## Plot phase 1 and phase 2 separately, separately for each arrangement
+data_for_bayes_anova <- results_table_qc_pass_ptp_analyzed %>% 
+        filter(experiment == which_expt)
+
+bayes_aov <- anovaBF(phase_2_min_phase_1_ses_1_2_perf~
+                             congruency*
+                             concept_phase_1*
+                             arr_phase_1_name,
+                     data = data_for_bayes_anova,
+                     whichModels = 'withmain',
+                     whichRandom = 'ptp',
+                     iterations = 100000)
+
+bayes_aov <- sort(bayes_aov, decreasing = TRUE)
+
+bayes_aov %>% knitr::kable() %>%
+        kable_styling(bootstrap_options = "striped")
+
+```
+
+
+## OLD Plot phase 1 and phase 2 separately, separately for each arrangement
 
 ```{r phases-separately-arrangements, fig.width = 10}
 
@@ -717,6 +759,8 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
 
 ```
 
+
+
 ```{r congruency-by-arrangements, message=FALSE}
 results_table_qc_pass_ptp_analyzed %>%
         reorder_levels(arr_phase_1_1, order = c("1", "14", "3", "15")) %>%
@@ -746,6 +790,7 @@ results_table_qc_pass_ptp_analyzed %>%
         kable_styling(bootstrap_options = "striped")
 
 ```
+
 # Looking at the difference between concept order?
 
 ```{r phases-separately-concepts, fig.width = 10}
