@@ -13,20 +13,22 @@ library(tidyverse)
 
 # Define global variables ###################################################
 
+# Variables below specify which simulation file will be read for analysis
 nIterEv <- 10000 # maybe the original simulation ran 10,000, but we want less?
 d1      <- 0.5
 d1_str  <- '05'
 nLimit  <- 200
 crit1   <- 6
 crit2   <- 1/6
+minN    <- 24
 
-nFrom <- 24
-nTo   <- 200
+# What are the various maxNs we want to analyze?
+nFrom <- 24 
+nTo   <- 200 
 nBy   <- 8
-minN  <- 24
+altNs <- seq(nFrom,nTo,by = nBy)
 
-altNs   <- seq(nFrom,nTo,by = nBy)
-
+# Flags
 saveOutData <- T
 
 
@@ -44,7 +46,7 @@ loadFile  <- paste('rslurm_raw_and_preprocessed/',
 # load data
 load(loadFile)
 
-# Construct a function to get stats from simulations 
+## Construct a function to get stats from simulations ==========================
 getStats <- function(data){
     
     # What IDs do we have?
@@ -128,6 +130,7 @@ getStats <- function(data){
     
 } # function getStats
 
+## Get the probabilities for d0 and d1 ========================================
 outData_d0 <- df %>%
     subset(d == 0) %>%
     getStats()
@@ -136,7 +139,7 @@ outData_d1 <- df %>%
     subset(d == d1) %>%
     getStats()
 
-# # Save outData
+## Save outData ================================================================
 
 saveNameOutData <- paste('analysis_output/resultsByManyNs_d_', d1_str,
                          '_crit1_', crit1, '_',
