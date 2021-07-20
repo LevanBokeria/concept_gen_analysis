@@ -418,9 +418,9 @@ bayes_aov <- anovaBF(phase_2_min_phase_1_ses_1_2_perf~
                              concept_phase_1*
                              arr_phase_1_name,
                      data = data_for_bayes_anova,
-                     whichModels = 'withmain',
+                     whichModels = 'all',
                      whichRandom = 'ptp',
-                     iterations = 100000)
+                     iterations = 10000)
 
 bayes_aov <- sort(bayes_aov, decreasing = TRUE)
 
