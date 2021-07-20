@@ -5,7 +5,6 @@ rm(list=ls())
 
 # Libraries
 library(ggplot2)
-library(gapminder)
 library(plyr)
 library(tidyverse)
 library(rio)
