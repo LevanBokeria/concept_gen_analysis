@@ -422,10 +422,40 @@ bayes_aov <- anovaBF(phase_2_min_phase_1_ses_1_2_perf~
                      whichRandom = 'ptp',
                      iterations = 10000)
 
-bayes_aov <- sort(bayes_aov, decreasing = TRUE)
+# bayes_aov <- sort(bayes_aov, decreasing = TRUE)
 
 bayes_aov %>% knitr::kable() %>%
         kable_styling(bootstrap_options = "striped")
+
+# Whats the winning model?
+bayes_aov_sorted <- sort(bayes_aov, decreasing = TRUE)
+
+bayes_aov_sorted[1]
+
+# Print the BF of the full model, with all main effects, all 2-way and 3-way interactions
+bayes_aov[127]
+
+# Compare the full model, with one lacking the 3-way interaction
+full_vs_no_3_way <- bayes_aov[120]/bayes_aov[127] # seems to be inconclusive
+full_vs_no_3_way
+
+# Compare full VS lacking congruency:arrangement
+full_vs_no_congruency_by_arr <- bayes_aov[122]/bayes_aov[127] # seems to be inconclusive
+full_vs_no_congruency_by_arr
+
+# Compare full VS lacking congruency:concept
+full_vs_no_congruency_by_concept <- bayes_aov[123]/bayes_aov[127] # seems to be inconclusive
+full_vs_no_congruency_by_concept
+
+# Compare full VS lacking arrangement:concept
+full_vs_no_arr_by_concept <- bayes_aov[121]/bayes_aov[127] # seems to be inconclusive
+full_vs_no_arr_by_concept
+
+# Compare full vs lacking main effect congruency
+full_vs_no_congruency  <- bayes_aov[121]/bayes_aov[127] # seems to be inconclusive
+full_vs_no_arr_by_concept
+
+
 
 ```
 
