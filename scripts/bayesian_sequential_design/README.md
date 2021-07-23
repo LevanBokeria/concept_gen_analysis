@@ -2,7 +2,7 @@
 
 1. specify_params_sent_to_slurm.R
 
-This will send a job to cluster. The output will be saved in a new folder in the current working directory starting the "_rslurm...". Move that folder into the "./rslurm_raw_and_preprocessed" folder
+This will send a job to cluster. The output will be saved in a new folder in the current working directory starting with "_rslurm...". Move that folder into the "./rslurm_raw_and_preprocessed" folder
 
 2. getResultsWrapper.R
 
