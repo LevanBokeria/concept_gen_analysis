@@ -435,25 +435,48 @@ bayes_aov_sorted[1]
 # Print the BF of the full model, with all main effects, all 2-way and 3-way interactions
 bayes_aov[127]
 
-# Compare the full model, with one lacking the 3-way interaction
+# 1. Compare the full model, with one lacking the 3-way interaction
 full_vs_no_3_way <- bayes_aov[120]/bayes_aov[127] # seems to be inconclusive
-full_vs_no_3_way
+full_vs_no_3_way # BF is 1.96, so very weak evidence in favor of the model lacking 3-way interaction, so cannot confidently say there is no 3-way interaction.
 
-# Compare full VS lacking congruency:arrangement
-full_vs_no_congruency_by_arr <- bayes_aov[122]/bayes_aov[127] # seems to be inconclusive
-full_vs_no_congruency_by_arr
+# 2. Compare full VS lacking congruency:arrangement
+full_vs_no_congruency_by_arr <- bayes_aov[122]/bayes_aov[127] 
+full_vs_no_congruency_by_arr # BF is 0.04 so massive evidence against lack of interaction, so confident there is an interaction.
 
-# Compare full VS lacking congruency:concept
-full_vs_no_congruency_by_concept <- bayes_aov[123]/bayes_aov[127] # seems to be inconclusive
-full_vs_no_congruency_by_concept
+# 3. Compare full VS lacking congruency:concept
+full_vs_no_congruency_by_concept <- bayes_aov[123]/bayes_aov[127] 
+full_vs_no_congruency_by_concept # BF=2.5, so weak evidence for lack of congruency:concept interaction, so cant say there isn't an interaction
 
-# Compare full VS lacking arrangement:concept
-full_vs_no_arr_by_concept <- bayes_aov[121]/bayes_aov[127] # seems to be inconclusive
-full_vs_no_arr_by_concept
+# 4. Compare full VS lacking arrangement:concept
+full_vs_no_arr_by_concept <- bayes_aov[121]/bayes_aov[127] 
+full_vs_no_arr_by_concept # BF=2.7, so can't confidently say there is no arr:concept interaction
 
-# Compare full vs lacking main effect congruency
-full_vs_no_congruency  <- bayes_aov[121]/bayes_aov[127] # seems to be inconclusive
-full_vs_no_arr_by_concept
+# 5. Compare full vs lacking main effect congruency
+full_vs_no_congruency  <- bayes_aov[126]/bayes_aov[127] 
+full_vs_no_congruency # BF=0.003, 1/BF=277, so massive evidence against lack of main effect congruency, so support main effect.
+
+# 6. Compare full vs lacking main effect concept_phase_1
+full_vs_no_concept  <- bayes_aov[125]/bayes_aov[127] 
+full_vs_no_concept # BF=0.52, so can't say there isn't a main effect of concept, weak evidence FOR it.
+
+# 7. Compare full vs lacking main effect arrangement
+full_vs_no_arr  <- bayes_aov[124]/bayes_aov[127] 
+full_vs_no_arr #BF=0.275 1/BF=3.63 so weak evidence for arrangement main effect
+
+
+# Construct a table:
+
+bayes_aov_table <- tibble(.rows = 7)
+
+bayes_aov_table$numerator <- c('congruency + concept_phase_1 + arr_phase_1_name + congruency:concept_phase_1 + congruency:arr_phase_1_name + concept_phase_1:arr_phase_1_name',
+                               'congruency + concept_phase_1 + arr_phase_1_name + congruency:concept_phase_1 + concept_phase_1:arr_phase_1_name + congruency:concept_phase_1:arr_phase_1_name',
+                               'congruency + concept_phase_1 + arr_phase_1_name + congruency:arr_phase_1_name + concept_phase_1:arr_phase_1_name + congruency:concept_phase_1:arr_phase_1_name',
+                               'congruency + concept_phase_1 + arr_phase_1_name + congruency:concept_phase_1 + congruency:arr_phase_1_name + congruency:concept_phase_1:arr_phase_1_name',
+                               'concept_phase_1 + arr_phase_1_name + congruency:concept_phase_1 + congruency:arr_phase_1_name + concept_phase_1:arr_phase_1_name +     congruency:concept_phase_1:arr_phase_1_name',
+                               'congruency + arr_phase_1_name + congruency:concept_phase_1 + congruency:arr_phase_1_name + concept_phase_1:arr_phase_1_name +     congruency:concept_phase_1:arr_phase_1_name',
+                               'congruency + concept_phase_1 + congruency:concept_phase_1 + congruency:arr_phase_1_name + concept_phase_1:arr_phase_1_name + congruency:concept_phase_1:arr_phase_1_name')
+bayes_aov_table$denominator <- rep('congruency + concept_phase_1 + arr_phase_1_name + congruency:concept_phase_1 + congruency:arr_phase_1_name + concept_phase_1:arr_phase_1_name + congruency:concept_phase_1:arr_phase_1_name',7)
+bayes_aov_table$bf10 <- c('one','two','three','4','5','6','7')
 
 
 
