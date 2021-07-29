@@ -411,12 +411,18 @@ pwc %>%
 ```{r anova-bayesian-expt1}
 
 data_for_bayes_anova <- results_table_qc_pass_ptp_analyzed %>% 
-        filter(experiment == which_expt)
+        filter(experiment == which_expt) %>%
+        rename(
+                Cg = congruency,
+                Cc = concept_phase_1,
+                Arr = arr_phase_1_name,
+                diff_scores = phase_2_min_phase_1_ses_1_2_perf
+        )
 
-bayes_aov <- anovaBF(phase_2_min_phase_1_ses_1_2_perf~
-                             congruency*
-                             concept_phase_1*
-                             arr_phase_1_name,
+bayes_aov <- anovaBF(diff_scores~
+                             Cg*
+                             Cc*
+                             Arr,
                      data = data_for_bayes_anova,
                      whichModels = 'all',
                      whichRandom = 'ptp',
@@ -429,59 +435,125 @@ bayes_aov %>% knitr::kable() %>%
 
 # Whats the winning model?
 bayes_aov_sorted <- sort(bayes_aov, decreasing = TRUE)
+bayes_aov_sorted %>% knitr::kable(caption = 'Against the Null model') %>%
+        kable_styling(bootstrap_options = "striped")
+
+# Compare everything to the full model
+bayes_aov[127]
+
+bayes_aov_vs_full <- sort(bayes_aov/bayes_aov[127], decreasing = TRUE)
+bayes_aov_vs_full %>% knitr::kable(caption = 'Against the full model') %>%
+        kable_styling(bootstrap_options = "striped")
 
 bayes_aov_sorted[1]
 
-# Print the BF of the full model, with all main effects, all 2-way and 3-way interactions
-bayes_aov[127]
-
-# 1. Compare the full model, with one lacking the 3-way interaction
-full_vs_no_3_way <- bayes_aov[120]/bayes_aov[127] # seems to be inconclusive
-full_vs_no_3_way # BF is 1.96, so very weak evidence in favor of the model lacking 3-way interaction, so cannot confidently say there is no 3-way interaction.
-
-# 2. Compare full VS lacking congruency:arrangement
-full_vs_no_congruency_by_arr <- bayes_aov[122]/bayes_aov[127] 
-full_vs_no_congruency_by_arr # BF is 0.04 so massive evidence against lack of interaction, so confident there is an interaction.
-
-# 3. Compare full VS lacking congruency:concept
-full_vs_no_congruency_by_concept <- bayes_aov[123]/bayes_aov[127] 
-full_vs_no_congruency_by_concept # BF=2.5, so weak evidence for lack of congruency:concept interaction, so cant say there isn't an interaction
-
-# 4. Compare full VS lacking arrangement:concept
-full_vs_no_arr_by_concept <- bayes_aov[121]/bayes_aov[127] 
-full_vs_no_arr_by_concept # BF=2.7, so can't confidently say there is no arr:concept interaction
-
-# 5. Compare full vs lacking main effect congruency
-full_vs_no_congruency  <- bayes_aov[126]/bayes_aov[127] 
-full_vs_no_congruency # BF=0.003, 1/BF=277, so massive evidence against lack of main effect congruency, so support main effect.
-
-# 6. Compare full vs lacking main effect concept_phase_1
-full_vs_no_concept  <- bayes_aov[125]/bayes_aov[127] 
-full_vs_no_concept # BF=0.52, so can't say there isn't a main effect of concept, weak evidence FOR it.
-
-# 7. Compare full vs lacking main effect arrangement
-full_vs_no_arr  <- bayes_aov[124]/bayes_aov[127] 
-full_vs_no_arr #BF=0.275 1/BF=3.63 so weak evidence for arrangement main effect
-
-
-# Construct a table:
-
-bayes_aov_table <- tibble(.rows = 7)
-
-bayes_aov_table$numerator <- c('congruency + concept_phase_1 + arr_phase_1_name + congruency:concept_phase_1 + congruency:arr_phase_1_name + concept_phase_1:arr_phase_1_name',
-                               'congruency + concept_phase_1 + arr_phase_1_name + congruency:concept_phase_1 + concept_phase_1:arr_phase_1_name + congruency:concept_phase_1:arr_phase_1_name',
-                               'congruency + concept_phase_1 + arr_phase_1_name + congruency:arr_phase_1_name + concept_phase_1:arr_phase_1_name + congruency:concept_phase_1:arr_phase_1_name',
-                               'congruency + concept_phase_1 + arr_phase_1_name + congruency:concept_phase_1 + congruency:arr_phase_1_name + congruency:concept_phase_1:arr_phase_1_name',
-                               'concept_phase_1 + arr_phase_1_name + congruency:concept_phase_1 + congruency:arr_phase_1_name + concept_phase_1:arr_phase_1_name +     congruency:concept_phase_1:arr_phase_1_name',
-                               'congruency + arr_phase_1_name + congruency:concept_phase_1 + congruency:arr_phase_1_name + concept_phase_1:arr_phase_1_name +     congruency:concept_phase_1:arr_phase_1_name',
-                               'congruency + concept_phase_1 + congruency:concept_phase_1 + congruency:arr_phase_1_name + concept_phase_1:arr_phase_1_name + congruency:concept_phase_1:arr_phase_1_name')
-bayes_aov_table$denominator <- rep('congruency + concept_phase_1 + arr_phase_1_name + congruency:concept_phase_1 + congruency:arr_phase_1_name + concept_phase_1:arr_phase_1_name + congruency:concept_phase_1:arr_phase_1_name',7)
-bayes_aov_table$bf10 <- c('one','two','three','4','5','6','7')
+# # Print the BF of the full model, with all main effects, all 2-way and 3-way interactions
+# bayes_aov[127]
+# 
+# # 1. Compare the full model, with one lacking the 3-way interaction
+# full_vs_no_3_way <- bayes_aov[120]/bayes_aov[127] # seems to be inconclusive
+# full_vs_no_3_way # BF is 1.96, so very weak evidence in favor of the model lacking 3-way interaction, so cannot confidently say there is no 3-way interaction.
+# 
+# # 2. Compare full VS lacking congruency:arrangement
+# full_vs_no_congruency_by_arr <- bayes_aov[122]/bayes_aov[127] 
+# full_vs_no_congruency_by_arr # BF is 0.04 so massive evidence against lack of interaction, so confident there is an interaction.
+# 
+# # 3. Compare full VS lacking congruency:concept
+# full_vs_no_congruency_by_concept <- bayes_aov[123]/bayes_aov[127] 
+# full_vs_no_congruency_by_concept # BF=2.5, so weak evidence for lack of congruency:concept interaction, so cant say there isn't an interaction
+# 
+# # 4. Compare full VS lacking arrangement:concept
+# full_vs_no_arr_by_concept <- bayes_aov[121]/bayes_aov[127] 
+# full_vs_no_arr_by_concept # BF=2.7, so can't confidently say there is no arr:concept interaction
+# 
+# # 5. Compare full vs lacking main effect congruency
+# full_vs_no_congruency  <- bayes_aov[126]/bayes_aov[127] 
+# full_vs_no_congruency # BF=0.003, 1/BF=277, so massive evidence against lack of main effect congruency, so support main effect.
+# 
+# # 6. Compare full vs lacking main effect concept_phase_1
+# full_vs_no_concept  <- bayes_aov[125]/bayes_aov[127] 
+# full_vs_no_concept # BF=0.52, so can't say there isn't a main effect of concept, weak evidence FOR it.
+# 
+# # 7. Compare full vs lacking main effect arrangement
+# full_vs_no_arr  <- bayes_aov[124]/bayes_aov[127] 
+# full_vs_no_arr #BF=0.275 1/BF=3.63 so weak evidence for arrangement main effect
+# 
+# 
+# # Construct a table:
+# 
+# bayes_aov_table <- tibble(.rows = 7)
+# 
+# bayes_aov_table$numerator <- c('congruency + concept_phase_1 + arr_phase_1_name + congruency:concept_phase_1 + congruency:arr_phase_1_name + concept_phase_1:arr_phase_1_name',
+#                                'congruency + concept_phase_1 + arr_phase_1_name + congruency:concept_phase_1 + concept_phase_1:arr_phase_1_name + congruency:concept_phase_1:arr_phase_1_name',
+#                                'congruency + concept_phase_1 + arr_phase_1_name + congruency:arr_phase_1_name + concept_phase_1:arr_phase_1_name + congruency:concept_phase_1:arr_phase_1_name',
+#                                'congruency + concept_phase_1 + arr_phase_1_name + congruency:concept_phase_1 + congruency:arr_phase_1_name + congruency:concept_phase_1:arr_phase_1_name',
+#                                'concept_phase_1 + arr_phase_1_name + congruency:concept_phase_1 + congruency:arr_phase_1_name + concept_phase_1:arr_phase_1_name +     congruency:concept_phase_1:arr_phase_1_name',
+#                                'congruency + arr_phase_1_name + congruency:concept_phase_1 + congruency:arr_phase_1_name + concept_phase_1:arr_phase_1_name +     congruency:concept_phase_1:arr_phase_1_name',
+#                                'congruency + concept_phase_1 + congruency:concept_phase_1 + congruency:arr_phase_1_name + concept_phase_1:arr_phase_1_name + congruency:concept_phase_1:arr_phase_1_name')
+# bayes_aov_table$denominator <- rep('congruency + concept_phase_1 + arr_phase_1_name + congruency:concept_phase_1 + congruency:arr_phase_1_name + concept_phase_1:arr_phase_1_name + congruency:concept_phase_1:arr_phase_1_name',7)
+# bayes_aov_table$bf10 <- c('one','two','three','4','5','6','7')
 
 
 
 ```
 
+
+## Follow-up 2-way ANOVAs (Bayesian)
+
+
+```{r follow-up-2-way-ANOVAs}
+
+# For each level of arrangement order, test the models.
+
+data_for_bayes_anova_arr1 <- data_for_bayes_anova %>%
+        filter(Arr == 1)
+data_for_bayes_anova_arr2 <- data_for_bayes_anova %>%
+        filter(Arr == 2)
+
+bayes_aov_arr1 <- anovaBF(diff_scores~
+                             Cg*
+                             Cc,
+                          data = data_for_bayes_anova_arr1,
+                          whichModels = 'all',
+                          whichRandom = 'ptp',
+                          iterations = 10000)
+bayes_aov_arr1_sorted <- sort(bayes_aov_arr1, decreasing = TRUE)
+
+bayes_aov_arr1_sorted %>% knitr::kable(
+        caption = 'Arr = 1, 2-way ANOVA, vs Null model'
+        ) %>%
+        kable_styling(bootstrap_options = "striped")
+
+# Compare all to the full model
+bayes_aov_arr_1_vs_full <- sort(bayes_aov_arr1/bayes_aov_arr1[7], decreasing = TRUE)
+bayes_aov_arr_1_vs_full %>% knitr::kable(
+        caption = 'Arr = 1, 2-way ANOVA, Against the full model'
+        ) %>%
+        kable_styling(bootstrap_options = "striped")
+
+# Now for arr2
+bayes_aov_arr2 <- anovaBF(diff_scores~
+                             Cg*
+                             Cc,
+                          data = data_for_bayes_anova_arr2,
+                          whichModels = 'all',
+                          whichRandom = 'ptp',
+                          iterations = 10000)
+bayes_aov_arr2_sorted <- sort(bayes_aov_arr2, decreasing = TRUE)
+
+bayes_aov_arr2_sorted %>% knitr::kable(
+        caption = 'Arr = 2, 2-way ANOVA, vs Null model'
+        ) %>%
+        kable_styling(bootstrap_options = "striped")
+
+# Compare all to the full model
+bayes_aov_arr_2_vs_full <- sort(bayes_aov_arr2/bayes_aov_arr2[7], decreasing = TRUE)
+bayes_aov_arr_2_vs_full %>% knitr::kable(
+        caption = 'Arr = 2, 2-way ANOVA, Against the full model'
+        ) %>%
+        kable_styling(bootstrap_options = "striped")
+
+```
 
 
 
@@ -752,24 +824,101 @@ long_form_data_qc_pass_ptp_analyzed %>%
 ```{r anova-bayesian-expt2}
 
 data_for_bayes_anova <- results_table_qc_pass_ptp_analyzed %>% 
-        filter(experiment == which_expt)
+        filter(experiment == which_expt) %>%
+        rename(
+                Cg = congruency,
+                Cc = concept_phase_1,
+                Arr = arr_phase_1_name,
+                diff_scores = phase_2_min_phase_1_ses_1_2_perf
+        )
 
-bayes_aov <- anovaBF(phase_2_min_phase_1_ses_1_2_perf~
-                             congruency*
-                             concept_phase_1*
-                             arr_phase_1_name,
+bayes_aov <- anovaBF(diff_scores~
+                             Cg*
+                             Cc*
+                             Arr,
                      data = data_for_bayes_anova,
-                     whichModels = 'withmain',
+                     whichModels = 'all',
                      whichRandom = 'ptp',
-                     iterations = 100000)
+                     iterations = 10000)
 
-bayes_aov <- sort(bayes_aov, decreasing = TRUE)
+# bayes_aov <- sort(bayes_aov, decreasing = TRUE)
 
 bayes_aov %>% knitr::kable() %>%
         kable_styling(bootstrap_options = "striped")
 
+# Whats the winning model?
+bayes_aov_sorted <- sort(bayes_aov, decreasing = TRUE)
+bayes_aov_sorted %>% knitr::kable(caption = 'Against the Null model') %>%
+        kable_styling(bootstrap_options = "striped")
+
+# Compare everything to the full model
+bayes_aov[127]
+
+bayes_aov_vs_full <- sort(bayes_aov/bayes_aov[127], decreasing = TRUE)
+bayes_aov_vs_full %>% knitr::kable(caption = 'Against the full model') %>%
+        kable_styling(bootstrap_options = "striped")
+
+bayes_aov_sorted[1]
+
 ```
 
+
+## Follow-up 2-way ANOVAs (Bayesian)
+
+
+```{r follow-up-2-way-ANOVAs-expt2}
+
+# For each level of arrangement order, test the models.
+
+data_for_bayes_anova_arr3 <- data_for_bayes_anova %>%
+        filter(Arr == 3)
+data_for_bayes_anova_arr4 <- data_for_bayes_anova %>%
+        filter(Arr == 4)
+
+bayes_aov_arr3 <- anovaBF(diff_scores~
+                             Cg*
+                             Cc,
+                          data = data_for_bayes_anova_arr3,
+                          whichModels = 'all',
+                          whichRandom = 'ptp',
+                          iterations = 10000)
+bayes_aov_arr3_sorted <- sort(bayes_aov_arr3, decreasing = TRUE)
+
+bayes_aov_arr3_sorted %>% knitr::kable(
+        caption = 'Arr = 3, 2-way ANOVA, vs Null model'
+        ) %>%
+        kable_styling(bootstrap_options = "striped")
+
+# Compare all to the full model
+bayes_aov_arr_3_vs_full <- sort(bayes_aov_arr3/bayes_aov_arr3[7], decreasing = TRUE)
+bayes_aov_arr_3_vs_full %>% knitr::kable(
+        caption = 'Arr = 3, 2-way ANOVA, Against the full model'
+        ) %>%
+        kable_styling(bootstrap_options = "striped")
+
+# Now for arr4
+bayes_aov_arr4 <- anovaBF(diff_scores~
+                             Cg*
+                             Cc,
+                          data = data_for_bayes_anova_arr4,
+                          whichModels = 'all',
+                          whichRandom = 'ptp',
+                          iterations = 10000)
+bayes_aov_arr4_sorted <- sort(bayes_aov_arr4, decreasing = TRUE)
+
+bayes_aov_arr4_sorted %>% knitr::kable(
+        caption = 'Arr = 4, 2-way ANOVA, vs Null model'
+        ) %>%
+        kable_styling(bootstrap_options = "striped")
+
+# Compare all to the full model
+bayes_aov_arr_4_vs_full <- sort(bayes_aov_arr4/bayes_aov_arr4[7], decreasing = TRUE)
+bayes_aov_arr_4_vs_full %>% knitr::kable(
+        caption = 'Arr = 4, 2-way ANOVA, Against the full model'
+        ) %>%
+        kable_styling(bootstrap_options = "striped")
+
+```
 
 ## OLD Plot phase 1 and phase 2 separately, separately for each arrangement
 
