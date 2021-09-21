@@ -41,7 +41,8 @@ load(loadFile)
 all_data <- rbind(outData_d1$outStats,outData_d0$outStats)
 
 # Start plotting #############################################################
-all_data %>%
+p1 <- 
+    all_data %>%
     pivot_longer(c('H1','H0','und'),names_to = 'supports',values_to = 'n_sim') %>% 
     mutate(supports = as.factor(supports),
            d = as.factor(d),
@@ -53,3 +54,5 @@ all_data %>%
     xlab('max N per group') + 
     facet_wrap(~d, labeller = label_both) + 
     ggtitle(paste('BF10=',crit1,', BF01=',1/crit2,sep=''))
+
+print(p1)
