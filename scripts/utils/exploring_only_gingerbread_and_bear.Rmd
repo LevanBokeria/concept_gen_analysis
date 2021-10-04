@@ -1,0 +1,1322 @@
+---
+title: "Exploring"
+output: bookdown::html_document2
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r load-all-libraries, message=FALSE, warning=FALSE, results=FALSE}
+
+# Clean the environment
+rm(list=ls())
+
+# Load libraries
+library(tidyverse)
+library(readxl)
+library(ggpubr)
+library(rstatix)
+library(emmeans)
+library(BayesFactor)
+library(DT)
+library(kableExtra)
+library(assortedRFunctions)
+library(TOSTER)
+
+# Source other scripts
+source('./utils/load_transform_gather.R')
+
+```
+
+# Load and get the datasets ready
+
+```{r load-transform-gather-filter-qc, message=FALSE}
+
+outList <- load_transform_gather()
+
+long_form_data_all_ptp_analyzed <- 
+    outList$long_form_data_all_ptp_analyzed
+long_form_data_qc_pass_ptp_analyzed <- 
+    outList$long_form_data_qc_pass_ptp_analyzed
+
+results_table_all_ptp_analyzed <- 
+        outList$results_table_all_ptp_analyzed
+results_table_qc_pass_ptp_analyzed <- 
+    outList$results_table_qc_pass_ptp_analyzed
+results_table_qc_pass_ptp_analyzed_gathered <- 
+    outList$results_table_qc_pass_ptp_analyzed_gathered
+
+rm(outList)
+
+```
+
+
+
+# Plots for experiment 1:
+
+
+```{r define-flags}
+
+which_expt <- 1
+
+```
+
+
+```{r exclude-sledge}
+
+# We have to exclude the sledge, and recalculate all the variables in the results_table_all_ptp_analyzed
+
+
+# Plan is to recalculate phase 2 ses 1-2 for each participant, and then substitute that new data in the existing tables
+
+summary_table <- 
+        long_form_data_qc_pass_ptp_analyzed %>%
+        filter(experiment == which_expt,
+               session == c(1,2)) %>%
+        filter(prompt_img_name != 'Sledge') %>% 
+        group_by(congruency,ptp,phase,session) %>%
+        get_summary_stats(correct,type='mean')
+
+ses_1_2_perf_table <- 
+        summary_table %>%
+        group_by(congruency,ptp,phase) %>%
+        get_summary_stats(mean,type='mean') %>%
+        select(-c(variable,n)) %>%
+        rename(session_1_2_perf = mean)
+        
+ses_1_2_perf_table_wide <-
+        ses_1_2_perf_table %>%
+        pivot_wider(names_from = phase,
+                    names_prefix = 'phase_',
+                    values_from = session_1_2_perf)
+
+ses_1_2_perf_table_wide <- 
+        ses_1_2_perf_table_wide %>%
+        mutate(phase_2_min_phase_1 = 
+                       phase_2 - phase_1)
+
+ses_1_2_perf_table_long <-
+        ses_1_2_perf_table_wide %>%
+        pivot_longer(cols = c(phase_1,
+                              phase_2,
+                              phase_2_min_phase_1),
+                     names_to = 'var_type',
+                     values_to = 'ses_1_2_perf')
+
+```
+
+```{r plot-this}
+
+ses_1_2_perf_table_long %>%
+        filter(var_type == 'phase_2_min_phase_1') %>%
+        ggplot(aes(x=congruency,y=ses_1_2_perf)) +
+        geom_boxplot(notch = TRUE) +
+        geom_point()
+
+
+```
+
+
+## The Basic congruency effect:
+
+```{r congruency-effect-expt-1, fig.width=3, fig.height=3}
+
+results_table_qc_pass_ptp_analyzed %>%
+        filter(experiment == which_expt) %>%
+        filter()
+        ggplot(aes(x=congruency,
+                   y=phase_2_min_phase_1_ses_1_2_perf,
+                   fill=congruency)) + 
+        geom_boxplot(width=0.6,notch = TRUE,outlier.shape = NA) + 
+        # geom_point(pch=21,
+        #            position = position_jitterdodge(dodge.width=0.5,
+        #                                            jitter.width=0.1)) +
+        geom_dotplot(binaxis='y', stackdir='center',
+                     stackratio=1, dotsize=0.6, fill="black") +
+        stat_summary(fun=mean, geom="point", shape=20, size=5, color="red", fill="red") +    
+        ylab("Plase 2 - Phase 1") + 
+        theme(axis.text.x = element_text(size=10),
+              axis.text.y = element_text(size=10)) +
+        scale_x_discrete(labels=c('Incongruent','Congruent')) +
+        scale_fill_manual(values=c('#e5f5f9','#2ca25f')) + 
+        theme(legend.position="none",
+              axis.title.x=element_blank())
+
+# Basic summary table
+results_table_qc_pass_ptp_analyzed %>%
+        filter(experiment == which_expt) %>%
+        group_by(congruency) %>%
+        get_summary_stats(phase_2_min_phase_1_ses_1_2_perf, type = 'mean_sd') %>%
+        knitr::kable() %>%
+        kable_styling(bootstrap_options = "striped")
+
+# Bayes factor analysis:
+
+# Analyze session differences
+ses_1_2_perf_congruent_1_arr_1_2 <-
+    results_table_qc_pass_ptp_analyzed %>%
+    filter(experiment == which_expt & congruency == 1) %>%
+    select(phase_2_min_phase_1_ses_1_2_perf) %>% .[[1]]
+
+ses_1_2_perf_congruent_0_arr_1_2 <-
+    results_table_qc_pass_ptp_analyzed %>%
+    filter(experiment == which_expt & congruency == 0) %>%
+    select(phase_2_min_phase_1_ses_1_2_perf) %>% .[[1]]
+
+bf_ses_1_2_perf_arr_1_2 <-
+    reportBF(ttestBF(
+        ses_1_2_perf_congruent_1_arr_1_2,
+        ses_1_2_perf_congruent_0_arr_1_2,
+        paired = FALSE
+    ),
+    4)
+
+# Basic t-test
+t.test(ses_1_2_perf_congruent_0_arr_1_2,ses_1_2_perf_congruent_1_arr_1_2,paired=FALSE)
+
+# Effect size for the session differences
+sd_c1 <- sd(ses_1_2_perf_congruent_1_arr_1_2)
+sd_c0 <- sd(ses_1_2_perf_congruent_0_arr_1_2)
+
+n_c1 <- length(ses_1_2_perf_congruent_1_arr_1_2)
+n_c0 <- length(ses_1_2_perf_congruent_0_arr_1_2)
+
+pooled_sd <- sqrt( 
+    (
+    (n_c1-1)*(sd_c1^2) + 
+    (n_c0-1)*(sd_c0^2)
+    ) / (n_c1 + n_c0 - 2)
+    )
+
+effect_size_arr_1_2 <- (mean(ses_1_2_perf_congruent_1_arr_1_2) - mean(ses_1_2_perf_congruent_0_arr_1_2)) /
+    pooled_sd
+
+```
+
+
+
+
+
+## The basic congruency effect, broken in phases
+
+```{r congruency-effect-expt-1-by-phases, fig.width=5}
+results_table_qc_pass_ptp_analyzed_gathered %>% 
+        filter(experiment == which_expt) %>%
+        ggplot(aes(x=congruency,
+                   y=ses_1_2_perf,
+                   fill=phase)) +
+        geom_boxplot(width=0.5,notch=TRUE,outlier.shape = NA) + 
+        geom_point(pch=21,
+                   position = position_jitterdodge(dodge.width=0.5,
+                                                   jitter.width=0.05)) +
+        ylab("Percent correct in sessions 1&2") + 
+        theme(axis.text.x = element_text(size=10),
+              axis.text.y = element_text(size=10),
+              axis.title.x=element_blank(),
+              legend.position = 'top') + 
+        scale_fill_manual(values=c('#045a8d','#d0d1e6'),
+                          name=element_blank(),
+                          labels=c('Phase 1','Phase 2')) + 
+        scale_x_discrete(labels=c('Incongruent','Congruent'))
+
+# Basic summary table
+results_table_qc_pass_ptp_analyzed_gathered %>%
+        filter(experiment == which_expt) %>%
+        group_by(congruency,phase) %>%
+        get_summary_stats(ses_1_2_perf, type = 'mean_sd') %>%
+        knitr::kable() %>%
+        kable_styling(bootstrap_options = "striped")
+```
+
+
+## The Basic congruency effect, arrangement order:
+
+```{r congruency-effect-expt-1-by-arrangements, fig.width=5}
+
+results_table_qc_pass_ptp_analyzed %>%
+        filter(experiment == which_expt) %>%
+        ggplot(aes(x=congruency,
+                   y=phase_2_min_phase_1_ses_1_2_perf,
+                   fill=congruency)) + 
+        geom_boxplot(width=0.5,notch = TRUE,outlier.shape = NA) + 
+        # geom_point(pch=21,
+        #            position = position_jitterdodge(dodge.width=0.5,
+        #                                            jitter.width=0.1)) +
+        geom_dotplot(binaxis='y', stackdir='center',
+                     stackratio=1, dotsize=0.7, fill="black") +
+        stat_summary(fun=mean, geom="point", shape=20, size=5, color="red", fill="red") +    
+        ylab("Plase 2 - Phase 1") + 
+        theme(axis.text.x = element_text(size=10),
+              axis.text.y = element_text(size=10)) +
+        scale_x_discrete(labels=c('Incongruent','Congruent')) +
+        scale_fill_manual(values=c('#e5f5f9','#2ca25f')) + 
+        theme(legend.position="none",
+              axis.title.x=element_blank()) + 
+        facet_wrap(~arr_phase_1_name,
+                   labeller = labeller(arr_phase_1_name = c("1" = "Start with Arr1",
+                                                         "2" = "Start with Arr2")))
+
+# Basic summary table
+results_table_qc_pass_ptp_analyzed %>%
+        filter(experiment == which_expt) %>%
+        group_by(arr_phase_1_name,congruency) %>%
+        get_summary_stats(phase_2_min_phase_1_ses_1_2_perf, type = 'mean_sd') %>%
+        knitr::kable() %>%
+        kable_styling(bootstrap_options = "striped")
+
+# Bayes factor analysis
+
+data_arr_1_c1 <- results_table_qc_pass_ptp_analyzed %>%
+    filter(arr_phase_1_name == 1 & congruency == 1) %>%
+    select(phase_2_min_phase_1_ses_1_2_perf) %>% .[[1]]
+data_arr_1_c0 <- results_table_qc_pass_ptp_analyzed %>%
+    filter(arr_phase_1_name == 1 & congruency == 0) %>%
+    select(phase_2_min_phase_1_ses_1_2_perf) %>% .[[1]]
+data_arr_2_c1 <- results_table_qc_pass_ptp_analyzed %>%
+    filter(arr_phase_1_name == 2 & congruency == 1) %>%
+    select(phase_2_min_phase_1_ses_1_2_perf) %>% .[[1]]
+data_arr_2_c0 <- results_table_qc_pass_ptp_analyzed %>%
+    filter(arr_phase_1_name == 2 & congruency == 0) %>%
+    select(phase_2_min_phase_1_ses_1_2_perf) %>% .[[1]]
+
+# Run the bayesian analysis
+
+BF_arr_1_first <- ttestBF(
+    data_arr_1_c1,data_arr_1_c0,    
+    paired = FALSE
+) %>% reportBF(4)
+BF_arr_2_first <- ttestBF(
+    data_arr_2_c1,
+    data_arr_2_c0,    
+    paired = FALSE
+) %>% reportBF(4)
+
+
+```
+## The basic congruency effect, broken in phases, arrangement order
+
+```{r congruency-effect-expt-1-by-phases-by-arrangements, fig.width=5}
+results_table_qc_pass_ptp_analyzed_gathered %>% 
+        filter(experiment == which_expt) %>%
+        ggplot(aes(x=congruency,
+                   y=ses_1_2_perf,
+                   fill=phase)) +
+        geom_boxplot(width=0.5,notch=TRUE,outlier.shape = NA) + 
+        geom_point(pch=21,
+                   position = position_jitterdodge(dodge.width=0.5,
+                                                   jitter.width=0.05)) +
+        ylab("Percent correct in sessions 1&2") + 
+        theme(axis.text.x = element_text(size=10),
+              axis.text.y = element_text(size=10),
+              axis.title.x=element_blank(),
+              legend.position = 'top') + 
+        scale_fill_manual(values=c('#045a8d','#d0d1e6'),
+                          name=element_blank(),
+                          labels=c('Phase 1','Phase 2')) + 
+        scale_x_discrete(labels=c('Incongruent','Congruent')) + 
+        facet_wrap(~arr_phase_1_name,
+                   labeller = labeller(arr_phase_1_name = c("1" = "Start with Arr1",
+                                                 "2" = "Start with Arr2")))
+
+# Basic summary table
+results_table_qc_pass_ptp_analyzed_gathered %>%
+        group_by(experiment,congruency,phase) %>%
+        get_summary_stats(ses_1_2_perf, type = 'mean_sd') %>%
+        knitr::kable() %>%
+        kable_styling(bootstrap_options = "striped")
+```
+
+
+## Look at performance for individual toys
+
+```{r individual-targets-incongruent-expt-1, fig.height = 5, fig.width = 10}
+
+# Filter to have only sessions 1-2, only incongruent, phase, arrangement, and 
+# the target that was the prompt for the trial
+
+long_form_data_qc_pass_ptp_analyzed %>%
+        filter(experiment == which_expt & 
+                       (session == 1 | session == 2) & 
+                       congruency == 0) %>%
+        select(congruency,arr_phase_1_name,arr_phase_2_name,
+               current_arrangement,concept_phase_1,ptp,
+               phase,session,prompt_img_name,correct) %>%
+        reorder_levels(prompt_img_name, 
+                       order = c("Sledge", "Gingerman", "Bear")) %>%
+        reorder_levels(current_arrangement,
+                       order = c('1','2')) %>%
+        group_by(current_arrangement,ptp,phase,prompt_img_name) %>%
+        summarize(avg_correct = mean(correct, na.rm = TRUE)) %>%
+        ggplot(aes(x=current_arrangement,fill=prompt_img_name, y=avg_correct)) +
+        geom_violin() +
+        stat_summary(fun=mean, geom="point", shape=19, size=2, 
+                     position=position_dodge(0.9)) +
+        stat_summary(fun=median, geom="point", shape=6, size=2, position=position_dodge(0.9)) +
+        facet_wrap(~phase, labeller =
+                           labeller(phase = c("1" = "Phase 1","2" = "Phase 2"))) +
+        theme(
+                legend.position="top",
+                legend.title=element_blank(),
+                plot.title = element_text(size=11),
+                axis.text.x = element_text(size=11),
+                axis.text.y = element_text(size=11)
+                ) +        
+        scale_x_discrete(labels=c('Arr1','Arr2')) +
+        ylab('% Correct Sessions 1&2') + 
+        xlab('Arrangement in this phase')
+        
+
+```
+
+
+
+
+
+
+
+
+
+
+
+## ANOVA 3-way: congruency, concept order, arrangement order
+
+```{r expt1-anova-3-way}
+
+# Compute the mean and the standard deviation (SD) of by groups:
+results_table_qc_pass_ptp_analyzed %>%  
+        filter(experiment == which_expt) %>%
+        group_by(congruency, arr_phase_1_name, concept_phase_1) %>%
+        get_summary_stats(phase_2_min_phase_1_ses_1_2_perf, type = "mean_sd")
+
+# Identify outliers
+results_table_qc_pass_ptp_analyzed %>%  
+        filter(experiment == which_expt) %>%
+        group_by(congruency, arr_phase_1_name, concept_phase_1) %>%
+        identify_outliers(phase_2_min_phase_1_ses_1_2_perf)
+
+# Normality tests and assumptions
+model  <- results_table_qc_pass_ptp_analyzed %>%
+        filter(experiment == which_expt) %>%
+        lm(phase_2_min_phase_1_ses_1_2_perf ~ 
+                     congruency*
+                     arr_phase_1_name*
+                     concept_phase_1, data = .)
+
+# QQ plot
+ggqqplot(residuals(model))
+
+# Create a QQ plot of residuals
+ggqqplot(residuals(model))
+
+# Compute Shapiro-Wilk test of normality
+shapiro_test(residuals(model))
+
+# QQ plots for each cell
+results_table_qc_pass_ptp_analyzed %>%  
+        filter(experiment == which_expt) %>%
+        group_by(congruency, arr_phase_1_name, concept_phase_1) %>%
+        ggqqplot("phase_2_min_phase_1_ses_1_2_perf", ggtheme = theme_bw()) +
+        facet_grid(congruency + concept_phase_1 ~ arr_phase_1_name, 
+                   labeller = "label_both")
+
+# Homogeneity of variance
+results_table_qc_pass_ptp_analyzed %>%  
+        filter(experiment == which_expt) %>%
+        levene_test(phase_2_min_phase_1_ses_1_2_perf ~ 
+                            congruency*
+                            arr_phase_1_name*
+                            concept_phase_1)
+
+
+# Do the test of normality by each group
+results_table_qc_pass_ptp_analyzed %>%  
+        filter(experiment == which_expt) %>%
+        group_by(congruency, arr_phase_1_name, concept_phase_1) %>%
+        shapiro_test(phase_2_min_phase_1_ses_1_2_perf)
+
+
+
+aov_3_expt_1 <- results_table_qc_pass_ptp_analyzed %>%
+        filter(experiment == which_expt) %>%
+        anova_test(
+        phase_2_min_phase_1_ses_1_2_perf ~
+                congruency*concept_phase_1*arr_phase_1_name)
+aov_3_expt_1 %>%
+        knitr::kable(caption = 'Expt1: congruency -X- concept -X- arrangement') %>%
+        kable_styling(bootstrap_options = "striped")
+
+
+```
+
+
+```{r emmeans-followup}
+
+pwc <- results_table_qc_pass_ptp_analyzed %>%
+        filter(experiment == which_expt) %>%
+    group_by(arr_phase_1_name) %>%
+  emmeans_test(phase_2_min_phase_1_ses_1_2_perf ~ congruency, p.adjust.method = "bonferroni") 
+pwc %>%
+    knitr::kable(caption = 'Expt1: congruency -X- concept -X- arrangement') %>%
+    kable_styling(bootstrap_options = "striped")
+
+
+```
+## ANOVA (Bayesian) 3-way: congruency, concept order, arrangement
+
+```{r anova-bayesian-expt1}
+
+data_for_bayes_anova <- results_table_qc_pass_ptp_analyzed %>% 
+        filter(experiment == which_expt) %>%
+        rename(
+                Cg = congruency,
+                Cc = concept_phase_1,
+                Arr = arr_phase_1_name,
+                diff_scores = phase_2_min_phase_1_ses_1_2_perf
+        )
+
+bayes_aov <- anovaBF(diff_scores~
+                             Cg*
+                             Cc*
+                             Arr,
+                     data = data_for_bayes_anova,
+                     whichModels = 'all',
+                     whichRandom = 'ptp',
+                     iterations = 10000)
+
+# bayes_aov <- sort(bayes_aov, decreasing = TRUE)
+
+bayes_aov %>% knitr::kable() %>%
+        kable_styling(bootstrap_options = "striped")
+
+# Whats the winning model?
+bayes_aov_sorted <- sort(bayes_aov, decreasing = TRUE)
+bayes_aov_sorted %>% knitr::kable(caption = 'Against the Null model') %>%
+        kable_styling(bootstrap_options = "striped")
+
+# Compare everything to the full model
+bayes_aov[127]
+
+bayes_aov_vs_full <- sort(bayes_aov/bayes_aov[127], decreasing = TRUE)
+bayes_aov_vs_full %>% knitr::kable(caption = 'Against the full model') %>%
+        kable_styling(bootstrap_options = "striped")
+
+bayes_aov_sorted[1]
+
+# # Print the BF of the full model, with all main effects, all 2-way and 3-way interactions
+# bayes_aov[127]
+# 
+# # 1. Compare the full model, with one lacking the 3-way interaction
+# full_vs_no_3_way <- bayes_aov[120]/bayes_aov[127] # seems to be inconclusive
+# full_vs_no_3_way # BF is 1.96, so very weak evidence in favor of the model lacking 3-way interaction, so cannot confidently say there is no 3-way interaction.
+# 
+# # 2. Compare full VS lacking congruency:arrangement
+# full_vs_no_congruency_by_arr <- bayes_aov[122]/bayes_aov[127] 
+# full_vs_no_congruency_by_arr # BF is 0.04 so massive evidence against lack of interaction, so confident there is an interaction.
+# 
+# # 3. Compare full VS lacking congruency:concept
+# full_vs_no_congruency_by_concept <- bayes_aov[123]/bayes_aov[127] 
+# full_vs_no_congruency_by_concept # BF=2.5, so weak evidence for lack of congruency:concept interaction, so cant say there isn't an interaction
+# 
+# # 4. Compare full VS lacking arrangement:concept
+# full_vs_no_arr_by_concept <- bayes_aov[121]/bayes_aov[127] 
+# full_vs_no_arr_by_concept # BF=2.7, so can't confidently say there is no arr:concept interaction
+# 
+# # 5. Compare full vs lacking main effect congruency
+# full_vs_no_congruency  <- bayes_aov[126]/bayes_aov[127] 
+# full_vs_no_congruency # BF=0.003, 1/BF=277, so massive evidence against lack of main effect congruency, so support main effect.
+# 
+# # 6. Compare full vs lacking main effect concept_phase_1
+# full_vs_no_concept  <- bayes_aov[125]/bayes_aov[127] 
+# full_vs_no_concept # BF=0.52, so can't say there isn't a main effect of concept, weak evidence FOR it.
+# 
+# # 7. Compare full vs lacking main effect arrangement
+# full_vs_no_arr  <- bayes_aov[124]/bayes_aov[127] 
+# full_vs_no_arr #BF=0.275 1/BF=3.63 so weak evidence for arrangement main effect
+# 
+# 
+# # Construct a table:
+# 
+# bayes_aov_table <- tibble(.rows = 7)
+# 
+# bayes_aov_table$numerator <- c('congruency + concept_phase_1 + arr_phase_1_name + congruency:concept_phase_1 + congruency:arr_phase_1_name + concept_phase_1:arr_phase_1_name',
+#                                'congruency + concept_phase_1 + arr_phase_1_name + congruency:concept_phase_1 + concept_phase_1:arr_phase_1_name + congruency:concept_phase_1:arr_phase_1_name',
+#                                'congruency + concept_phase_1 + arr_phase_1_name + congruency:arr_phase_1_name + concept_phase_1:arr_phase_1_name + congruency:concept_phase_1:arr_phase_1_name',
+#                                'congruency + concept_phase_1 + arr_phase_1_name + congruency:concept_phase_1 + congruency:arr_phase_1_name + congruency:concept_phase_1:arr_phase_1_name',
+#                                'concept_phase_1 + arr_phase_1_name + congruency:concept_phase_1 + congruency:arr_phase_1_name + concept_phase_1:arr_phase_1_name +     congruency:concept_phase_1:arr_phase_1_name',
+#                                'congruency + arr_phase_1_name + congruency:concept_phase_1 + congruency:arr_phase_1_name + concept_phase_1:arr_phase_1_name +     congruency:concept_phase_1:arr_phase_1_name',
+#                                'congruency + concept_phase_1 + congruency:concept_phase_1 + congruency:arr_phase_1_name + concept_phase_1:arr_phase_1_name + congruency:concept_phase_1:arr_phase_1_name')
+# bayes_aov_table$denominator <- rep('congruency + concept_phase_1 + arr_phase_1_name + congruency:concept_phase_1 + congruency:arr_phase_1_name + concept_phase_1:arr_phase_1_name + congruency:concept_phase_1:arr_phase_1_name',7)
+# bayes_aov_table$bf10 <- c('one','two','three','4','5','6','7')
+
+
+
+```
+
+
+## Follow-up 2-way ANOVAs (Bayesian)
+
+
+```{r follow-up-2-way-ANOVAs}
+
+# For each level of arrangement order, test the models.
+
+data_for_bayes_anova_arr1 <- data_for_bayes_anova %>%
+        filter(Arr == 1)
+data_for_bayes_anova_arr2 <- data_for_bayes_anova %>%
+        filter(Arr == 2)
+
+bayes_aov_arr1 <- anovaBF(diff_scores~
+                             Cg*
+                             Cc,
+                          data = data_for_bayes_anova_arr1,
+                          whichModels = 'all',
+                          whichRandom = 'ptp',
+                          iterations = 10000)
+bayes_aov_arr1_sorted <- sort(bayes_aov_arr1, decreasing = TRUE)
+
+bayes_aov_arr1_sorted %>% knitr::kable(
+        caption = 'Arr = 1, 2-way ANOVA, vs Null model'
+        ) %>%
+        kable_styling(bootstrap_options = "striped")
+
+# Compare all to the full model
+bayes_aov_arr_1_vs_full <- sort(bayes_aov_arr1/bayes_aov_arr1[7], decreasing = TRUE)
+bayes_aov_arr_1_vs_full %>% knitr::kable(
+        caption = 'Arr = 1, 2-way ANOVA, Against the full model'
+        ) %>%
+        kable_styling(bootstrap_options = "striped")
+
+# Now for arr2
+bayes_aov_arr2 <- anovaBF(diff_scores~
+                             Cg*
+                             Cc,
+                          data = data_for_bayes_anova_arr2,
+                          whichModels = 'all',
+                          whichRandom = 'ptp',
+                          iterations = 10000)
+bayes_aov_arr2_sorted <- sort(bayes_aov_arr2, decreasing = TRUE)
+
+bayes_aov_arr2_sorted %>% knitr::kable(
+        caption = 'Arr = 2, 2-way ANOVA, vs Null model'
+        ) %>%
+        kable_styling(bootstrap_options = "striped")
+
+# Compare all to the full model
+bayes_aov_arr_2_vs_full <- sort(bayes_aov_arr2/bayes_aov_arr2[7], decreasing = TRUE)
+bayes_aov_arr_2_vs_full %>% knitr::kable(
+        caption = 'Arr = 2, 2-way ANOVA, Against the full model'
+        ) %>%
+        kable_styling(bootstrap_options = "striped")
+
+```
+
+
+
+# Plots for experiment 2:
+
+
+```{r define-flags}
+
+which_expt <- 2
+
+```
+
+
+## The Basic congruency effect:
+
+```{r congruency-effect-expt-2, fig.width=5}
+
+results_table_qc_pass_ptp_analyzed %>%
+        filter(experiment == which_expt) %>%
+        ggplot(aes(x=congruency,
+                   y=phase_2_min_phase_1_ses_1_2_perf,
+                   fill=congruency)) + 
+        geom_boxplot(width=0.2,notch = TRUE,outlier.shape = NA) + 
+        # geom_point(pch=21,
+        #            position = position_jitterdodge(dodge.width=0.5,
+        #                                            jitter.width=0.1)) +
+        geom_dotplot(binaxis='y', stackdir='center',
+                     stackratio=1, dotsize=0.7, fill="black") +
+        stat_summary(fun=mean, geom="point", shape=20, size=5, color="red", fill="red") +    
+        ylab("Plase 2 - Phase 1") + 
+        theme(axis.text.x = element_text(size=10),
+              axis.text.y = element_text(size=10)) +
+        scale_x_discrete(labels=c('Incongruent','Congruent')) +
+        scale_fill_manual(values=c('#e5f5f9','#2ca25f')) + 
+        theme(legend.position="none",
+              axis.title.x=element_blank())
+
+# Basic summary table
+results_table_qc_pass_ptp_analyzed %>%
+        filter(experiment == which_expt) %>%
+        group_by(congruency) %>%
+        get_summary_stats(phase_2_min_phase_1_ses_1_2_perf, type = 'mean_sd') %>%
+        knitr::kable() %>%
+        kable_styling(bootstrap_options = "striped")
+
+# Bayes factor analysis:
+
+# Analyze session differences
+ses_1_2_perf_congruent_1_arr_1_2 <-
+    results_table_qc_pass_ptp_analyzed %>%
+    filter(experiment == which_expt & congruency == 1) %>%
+    select(phase_2_min_phase_1_ses_1_2_perf) %>% .[[1]]
+
+ses_1_2_perf_congruent_0_arr_1_2 <-
+    results_table_qc_pass_ptp_analyzed %>%
+    filter(experiment == which_expt & congruency == 0) %>%
+    select(phase_2_min_phase_1_ses_1_2_perf) %>% .[[1]]
+
+bf_ses_1_2_perf_arr_1_2 <-
+    reportBF(ttestBF(
+        ses_1_2_perf_congruent_1_arr_1_2,
+        ses_1_2_perf_congruent_0_arr_1_2,
+        paired = FALSE
+    ),
+    4)
+
+# Basic t-test
+t.test(ses_1_2_perf_congruent_0_arr_1_2,ses_1_2_perf_congruent_1_arr_1_2,paired=FALSE)
+
+# Effect size for the session differences
+sd_c1 <- sd(ses_1_2_perf_congruent_1_arr_1_2)
+sd_c0 <- sd(ses_1_2_perf_congruent_0_arr_1_2)
+
+n_c1 <- length(ses_1_2_perf_congruent_1_arr_1_2)
+n_c0 <- length(ses_1_2_perf_congruent_0_arr_1_2)
+
+pooled_sd <- sqrt( 
+    (
+    (n_c1-1)*(sd_c1^2) + 
+    (n_c0-1)*(sd_c0^2)
+    ) / (n_c1 + n_c0 - 2)
+    )
+
+effect_size_arr_1_2 <- (mean(ses_1_2_perf_congruent_1_arr_1_2) - mean(ses_1_2_perf_congruent_0_arr_1_2)) /
+    pooled_sd
+
+```
+
+
+
+
+
+## The basic congruency effect, broken in phases
+
+```{r congruency-effect-expt-2-by-phases, fig.width=5}
+results_table_qc_pass_ptp_analyzed_gathered %>% 
+        filter(experiment == which_expt) %>%
+        ggplot(aes(x=congruency,
+                   y=ses_1_2_perf,
+                   fill=phase)) +
+        geom_boxplot(width=0.5,notch=TRUE,outlier.shape = NA) + 
+        geom_point(pch=21,
+                   position = position_jitterdodge(dodge.width=0.5,
+                                                   jitter.width=0.05)) +
+        ylab("Percent correct in sessions 1&2") + 
+        theme(axis.text.x = element_text(size=10),
+              axis.text.y = element_text(size=10),
+              axis.title.x=element_blank(),
+              legend.position = 'top') + 
+        scale_fill_manual(values=c('#045a8d','#d0d1e6'),
+                          name=element_blank(),
+                          labels=c('Phase 1','Phase 2')) + 
+        scale_x_discrete(labels=c('Incongruent','Congruent'))
+
+# Basic summary table
+results_table_qc_pass_ptp_analyzed_gathered %>%
+        filter(experiment == which_expt) %>%
+        group_by(congruency,phase) %>%
+        get_summary_stats(ses_1_2_perf, type = 'mean_sd') %>%
+        knitr::kable() %>%
+        kable_styling(bootstrap_options = "striped")
+```
+
+
+## The Basic congruency effect, arrangement order:
+
+```{r congruency-effect-expt-2-by-arrangements, fig.width=5}
+
+results_table_qc_pass_ptp_analyzed %>%
+        filter(experiment == which_expt) %>%
+        ggplot(aes(x=congruency,
+                   y=phase_2_min_phase_1_ses_1_2_perf,
+                   fill=congruency)) + 
+        geom_boxplot(width=0.5,notch = TRUE,outlier.shape = NA) + 
+        # geom_point(pch=21,
+        #            position = position_jitterdodge(dodge.width=0.5,
+        #                                            jitter.width=0.1)) +
+        geom_dotplot(binaxis='y', stackdir='center',
+                     stackratio=1, dotsize=0.7, fill="black") +
+        stat_summary(fun=mean, geom="point", shape=20, size=5, color="red", fill="red") +    
+        ylab("Plase 2 - Phase 1") + 
+        theme(axis.text.x = element_text(size=10),
+              axis.text.y = element_text(size=10)) +
+        scale_x_discrete(labels=c('Incongruent','Congruent')) +
+        scale_fill_manual(values=c('#e5f5f9','#2ca25f')) + 
+        theme(legend.position="none",
+              axis.title.x=element_blank()) + 
+        facet_wrap(~arr_phase_1_name,
+                   labeller = labeller(arr_phase_1_name = c("3" = "Start with Arr3",
+                                                         "4" = "Start with Arr4")))
+
+# Basic summary table
+results_table_qc_pass_ptp_analyzed %>%
+        filter(experiment == which_expt) %>%
+        group_by(arr_phase_1_name,congruency) %>%
+        get_summary_stats(phase_2_min_phase_1_ses_1_2_perf, type = 'mean_sd') %>%
+        knitr::kable() %>%
+        kable_styling(bootstrap_options = "striped")
+
+# Bayes factor analysis
+
+data_arr_3_c1 <- results_table_qc_pass_ptp_analyzed %>%
+    filter(arr_phase_1_name == 3 & congruency == 1) %>%
+    select(phase_2_min_phase_1_ses_1_2_perf) %>% .[[1]]
+data_arr_3_c0 <- results_table_qc_pass_ptp_analyzed %>%
+    filter(arr_phase_1_name == 3 & congruency == 0) %>%
+    select(phase_2_min_phase_1_ses_1_2_perf) %>% .[[1]]
+data_arr_4_c1 <- results_table_qc_pass_ptp_analyzed %>%
+    filter(arr_phase_1_name == 4 & congruency == 1) %>%
+    select(phase_2_min_phase_1_ses_1_2_perf) %>% .[[1]]
+data_arr_4_c0 <- results_table_qc_pass_ptp_analyzed %>%
+    filter(arr_phase_1_name == 4 & congruency == 0) %>%
+    select(phase_2_min_phase_1_ses_1_2_perf) %>% .[[1]]
+
+# Run the bayesian analysis
+
+BF_arr_3_first <- ttestBF(
+    data_arr_3_c1,
+    data_arr_3_c0,    
+    paired = FALSE
+) %>% reportBF(4)
+BF_arr_4_first <- ttestBF(
+    data_arr_4_c1,
+    data_arr_4_c0,    
+    paired = FALSE
+) %>% reportBF(4)
+
+
+```
+
+## The basic congruency effect, broken in phases, arrangement order
+
+```{r congruency-effect-expt-2-by-phases-by-arrangements, fig.width=5}
+results_table_qc_pass_ptp_analyzed_gathered %>% 
+        filter(experiment == which_expt) %>%
+        ggplot(aes(x=congruency,
+                   y=ses_1_2_perf,
+                   fill=phase)) +
+        geom_boxplot(width=0.5,notch=TRUE,outlier.shape = NA) + 
+        geom_point(pch=21,
+                   position = position_jitterdodge(dodge.width=0.5,
+                                                   jitter.width=0.05)) +
+        ylab("Percent correct in sessions 1&2") + 
+        theme(axis.text.x = element_text(size=10),
+              axis.text.y = element_text(size=10),
+              axis.title.x=element_blank(),
+              legend.position = 'top') + 
+        scale_fill_manual(values=c('#045a8d','#d0d1e6'),
+                          name=element_blank(),
+                          labels=c('Phase 1','Phase 2')) + 
+        scale_x_discrete(labels=c('Incongruent','Congruent')) + 
+        facet_wrap(~arr_phase_1_name,
+                   labeller = labeller(arr_phase_1_name = c("3" = "Start with Arr3",
+                                                 "4" = "Start with Arr4")))
+
+# Basic summary table
+results_table_qc_pass_ptp_analyzed_gathered %>%
+        group_by(experiment,congruency,phase) %>%
+        get_summary_stats(ses_1_2_perf, type = 'mean_sd') %>%
+        knitr::kable() %>%
+        kable_styling(bootstrap_options = "striped")
+```
+
+
+## Look at performance for individual toys
+
+```{r individual-targets-incongruent-expt-2, fig.height = 5, fig.width = 10}
+
+# Filter to have only sessions 1-2, only incongruent, phase, arrangement, and 
+# the target that was the prompt for the trial
+
+long_form_data_qc_pass_ptp_analyzed %>%
+        filter(experiment == which_expt & 
+                       (session == 1 | session == 2) & 
+                       congruency == 0) %>%
+        select(congruency,arr_phase_1_name,arr_phase_2_name,
+               current_arrangement,concept_phase_1,ptp,
+               phase,session,prompt_img_name,correct) %>%
+        reorder_levels(prompt_img_name, 
+                       order = c("Sledge", "Gingerman", "Bear")) %>%
+        reorder_levels(current_arrangement,
+                       order = c('3','4')) %>%
+        group_by(current_arrangement,ptp,phase,prompt_img_name) %>%
+        summarize(avg_correct = mean(correct, na.rm = TRUE)) %>%
+        ggplot(aes(x=current_arrangement,fill=prompt_img_name, y=avg_correct)) +
+        geom_violin() +
+        stat_summary(fun=mean, geom="point", shape=19, size=2, 
+                     position=position_dodge(0.9)) +
+        stat_summary(fun=median, geom="point", shape=6, size=2, position=position_dodge(0.9)) +
+        facet_wrap(~phase, labeller =
+                           labeller(phase = c("1" = "Phase 1","2" = "Phase 2"))) +
+        theme(
+                legend.position="top",
+                legend.title=element_blank(),
+                plot.title = element_text(size=11),
+                axis.text.x = element_text(size=11),
+                axis.text.y = element_text(size=11)
+                ) +        
+        scale_x_discrete(labels=c('Arr3','Arr4')) +
+        ylab('% Correct Sessions 1&2') + 
+        xlab('Arrangement in this phase')
+        
+
+```
+
+## ANOVA 3-way (frequentist): congruency, concept order, arrangement order
+
+```{r expt2-anova-3-way-frequentist}
+
+# Compute the mean and the standard deviation (SD) of by groups:
+results_table_qc_pass_ptp_analyzed %>%  
+        filter(experiment == which_expt) %>%
+        group_by(congruency, arr_phase_1_name, concept_phase_1) %>%
+        get_summary_stats(phase_2_min_phase_1_ses_1_2_perf, type = "mean_sd")
+
+# Identify outliers
+results_table_qc_pass_ptp_analyzed %>%  
+        filter(experiment == which_expt) %>%
+        group_by(congruency, arr_phase_1_name, concept_phase_1) %>%
+        identify_outliers(phase_2_min_phase_1_ses_1_2_perf)
+
+# Normality tests and assumptions
+model  <- results_table_qc_pass_ptp_analyzed %>%
+        filter(experiment == which_expt) %>%
+        lm(phase_2_min_phase_1_ses_1_2_perf ~ 
+                     congruency*
+                     arr_phase_1_name*
+                     concept_phase_1, data = .)
+
+# Create a QQ plot of residuals
+ggqqplot(residuals(model))
+
+# Compute Shapiro-Wilk test of normality
+shapiro_test(residuals(model))
+
+# QQ plots for each cell
+results_table_qc_pass_ptp_analyzed %>%  
+        filter(experiment == which_expt) %>%
+        group_by(congruency, arr_phase_1_name, concept_phase_1) %>%
+        ggqqplot("phase_2_min_phase_1_ses_1_2_perf", ggtheme = theme_bw()) +
+        facet_grid(congruency + concept_phase_1 ~ arr_phase_1_name, 
+                   labeller = "label_both")
+
+# Homogeneity of variance
+results_table_qc_pass_ptp_analyzed %>%  
+        filter(experiment == which_expt) %>%
+        levene_test(phase_2_min_phase_1_ses_1_2_perf ~ 
+                            congruency*
+                            arr_phase_1_name*
+                            concept_phase_1)
+
+
+# Do the test of normality by each group
+results_table_qc_pass_ptp_analyzed %>%  
+        filter(experiment == which_expt) %>%
+        group_by(congruency, arr_phase_1_name, concept_phase_1) %>%
+        shapiro_test(phase_2_min_phase_1_ses_1_2_perf)
+
+
+
+aov_3_expt_2 <- results_table_qc_pass_ptp_analyzed %>%
+        filter(experiment == which_expt) %>%
+        anova_test(
+        phase_2_min_phase_1_ses_1_2_perf ~
+                congruency*concept_phase_1*arr_phase_1_name)
+aov_3_expt_2 %>%
+        knitr::kable(caption = 'Expt1: congruency -X- concept -X- arrangement') %>%
+        kable_styling(bootstrap_options = "striped")
+
+
+```
+
+
+## ANOVA (Bayesian) 3-way: congruency, concept order, arrangement
+
+```{r anova-bayesian-expt2}
+
+data_for_bayes_anova <- results_table_qc_pass_ptp_analyzed %>% 
+        filter(experiment == which_expt) %>%
+        rename(
+                Cg = congruency,
+                Cc = concept_phase_1,
+                Arr = arr_phase_1_name,
+                diff_scores = phase_2_min_phase_1_ses_1_2_perf
+        )
+
+bayes_aov <- anovaBF(diff_scores~
+                             Cg*
+                             Cc*
+                             Arr,
+                     data = data_for_bayes_anova,
+                     whichModels = 'all',
+                     whichRandom = 'ptp',
+                     iterations = 10000)
+
+# bayes_aov <- sort(bayes_aov, decreasing = TRUE)
+
+bayes_aov %>% knitr::kable() %>%
+        kable_styling(bootstrap_options = "striped")
+
+# Whats the winning model?
+bayes_aov_sorted <- sort(bayes_aov, decreasing = TRUE)
+bayes_aov_sorted %>% knitr::kable(caption = 'Against the Null model') %>%
+        kable_styling(bootstrap_options = "striped")
+
+# Compare everything to the full model
+bayes_aov[127]
+
+bayes_aov_vs_full <- sort(bayes_aov/bayes_aov[127], decreasing = TRUE)
+bayes_aov_vs_full %>% knitr::kable(caption = 'Against the full model') %>%
+        kable_styling(bootstrap_options = "striped")
+
+bayes_aov_sorted[1]
+
+```
+
+
+## Follow-up 2-way ANOVAs (Bayesian)
+
+
+```{r follow-up-2-way-ANOVAs-expt2}
+
+# For each level of arrangement order, test the models.
+
+data_for_bayes_anova_arr3 <- data_for_bayes_anova %>%
+        filter(Arr == 3)
+data_for_bayes_anova_arr4 <- data_for_bayes_anova %>%
+        filter(Arr == 4)
+
+bayes_aov_arr3 <- anovaBF(diff_scores~
+                             Cg*
+                             Cc,
+                          data = data_for_bayes_anova_arr3,
+                          whichModels = 'all',
+                          whichRandom = 'ptp',
+                          iterations = 10000)
+bayes_aov_arr3_sorted <- sort(bayes_aov_arr3, decreasing = TRUE)
+
+bayes_aov_arr3_sorted %>% knitr::kable(
+        caption = 'Arr = 3, 2-way ANOVA, vs Null model'
+        ) %>%
+        kable_styling(bootstrap_options = "striped")
+
+# Compare all to the full model
+bayes_aov_arr_3_vs_full <- sort(bayes_aov_arr3/bayes_aov_arr3[7], decreasing = TRUE)
+bayes_aov_arr_3_vs_full %>% knitr::kable(
+        caption = 'Arr = 3, 2-way ANOVA, Against the full model'
+        ) %>%
+        kable_styling(bootstrap_options = "striped")
+
+# Now for arr4
+bayes_aov_arr4 <- anovaBF(diff_scores~
+                             Cg*
+                             Cc,
+                          data = data_for_bayes_anova_arr4,
+                          whichModels = 'all',
+                          whichRandom = 'ptp',
+                          iterations = 10000)
+bayes_aov_arr4_sorted <- sort(bayes_aov_arr4, decreasing = TRUE)
+
+bayes_aov_arr4_sorted %>% knitr::kable(
+        caption = 'Arr = 4, 2-way ANOVA, vs Null model'
+        ) %>%
+        kable_styling(bootstrap_options = "striped")
+
+# Compare all to the full model
+bayes_aov_arr_4_vs_full <- sort(bayes_aov_arr4/bayes_aov_arr4[7], decreasing = TRUE)
+bayes_aov_arr_4_vs_full %>% knitr::kable(
+        caption = 'Arr = 4, 2-way ANOVA, Against the full model'
+        ) %>%
+        kable_styling(bootstrap_options = "striped")
+
+```
+
+## OLD Plot phase 1 and phase 2 separately, separately for each arrangement
+
+```{r phases-separately-arrangements, fig.width = 10}
+
+results_table_qc_pass_ptp_analyzed_gathered %>% 
+        reorder_levels(arr_phase_1_1, order = c("1", "14", "3", "15")) %>%
+        ggplot(aes(x=congruency,y=ses_1_2_perf,fill=phase)) +
+        geom_boxplot(width=0.5,notch=FALSE,outlier.shape = NA) + 
+        geom_point(pch=21,
+                   position = position_jitterdodge(dodge.width=0.5,
+                                                   jitter.width=0.1)) +
+        # stat_summary(fun=mean, geom="point", shape=20, 
+        #              size=5, color="red", fill="red") +
+        ylab("ses 1&2 acc") + 
+        xlab('') +
+        theme(axis.text.x = element_text(size=10),
+              axis.text.y = element_text(size=10)) + 
+        scale_fill_manual(values=c('#045a8d','#d0d1e6'),
+                          name=element_blank(),
+                          labels=c('Phase 1','Phase 2')) + 
+        facet_wrap(~arr_phase_1_1, ncol = 4,
+                   labeller = labeller(arr_phase_1_1 = c("1" = "Arr1",
+                                                         "14" = "Arr2",
+                                                         "3" = "Arr3",
+                                                         "15" = "Arr4"))) +        
+        theme(legend.position="top") + 
+        scale_x_discrete(labels=c('Incongruent','Congruent')) + 
+        ylab("Percent correct in sessions 1&2")
+
+
+
+# Basic summary table
+results_table_qc_pass_ptp_analyzed_gathered %>%
+        reorder_levels(arr_phase_1_1, order = c("1", "14", "3", "15")) %>%
+        group_by(arr_phase_1_1,congruency,phase) %>%
+        get_summary_stats(ses_1_2_perf, type = 'mean_sd') %>%
+        knitr::kable() %>%
+        kable_styling(bootstrap_options = "striped")
+
+```
+
+
+
+```{r congruency-by-arrangements, message=FALSE}
+results_table_qc_pass_ptp_analyzed %>%
+        reorder_levels(arr_phase_1_1, order = c("1", "14", "3", "15")) %>%
+        ggplot(aes(x=arr_phase_1_1,y=phase_2_min_phase_1_ses_1_2_perf,
+                   fill=congruency)) + 
+        geom_boxplot(width=0.5,notch = TRUE) + 
+        # geom_dotplot(binaxis='y', stackdir='center',
+        #              stackratio=1, dotsize=0.5, fill="black",
+        #              position = position_jitterdodge(dodge.width=0.5,
+        #                                              jitter.width=0.1)) +        
+        geom_point(pch=21,
+                   position = position_jitterdodge(dodge.width=0.5,
+                                                   jitter.width=0.1)) +
+        ylab("P2-P1, ses 1&2 acc") + 
+        scale_x_discrete(labels=c('Arr1','Arr2','Arr3','Arr4')) +
+        theme(axis.text.x = element_text(size=14),
+              axis.text.y = element_text(size=14)) + 
+        scale_fill_manual(values=c('#e5f5f9','#2ca25f')) + 
+        xlab('Phase 1 arrangement')
+
+# Basic summary table
+results_table_qc_pass_ptp_analyzed %>%
+        reorder_levels(arr_phase_1_1, order = c("1", "14", "3", "15")) %>%
+        group_by(arr_phase_1_1,congruency) %>%
+        get_summary_stats(phase_2_min_phase_1_ses_1_2_perf, type = 'mean_sd') %>%
+        knitr::kable() %>%
+        kable_styling(bootstrap_options = "striped")
+
+```
+
+# Looking at the difference between concept order?
+
+```{r phases-separately-concepts, fig.width = 10}
+
+results_table_qc_pass_ptp_analyzed_gathered %>% 
+        ggplot(aes(x=congruency,y=ses_1_2_perf,fill=phase)) +
+        geom_boxplot(width=0.5,notch=FALSE,outlier.shape = NA) + 
+        geom_point(pch=21,
+                   position = position_jitterdodge(dodge.width=0.5,
+                                                   jitter.width=0.1)) +
+        # xlab('') +
+        theme(axis.text.x = element_text(size=10),
+              axis.text.y = element_text(size=10)) + 
+        scale_fill_manual(values=c('#045a8d','#d0d1e6'),
+                          name=element_blank(),
+                          labels=c('Phase 1','Phase 2')) + 
+        facet_wrap(~concept_phase_1) +
+        theme(legend.position="top") + 
+        scale_x_discrete(labels=c('Incongruent','Congruent')) +
+        ylab("Percent correct in sessions 1&2")
+
+# Grid display, showing experiment by concept order
+results_table_qc_pass_ptp_analyzed_gathered %>% 
+        ggplot(aes(x=congruency,y=ses_1_2_perf,fill=phase)) +
+        geom_boxplot(width=0.5,notch=FALSE,outlier.shape = NA) + 
+        geom_point(pch=21,
+                   position = position_jitterdodge(dodge.width=0.5,
+                                                   jitter.width=0.1)) +
+        # xlab('') +
+        theme(axis.text.x = element_text(size=10),
+              axis.text.y = element_text(size=10)) + 
+        scale_fill_manual(values=c('#045a8d','#d0d1e6'),
+                          name=element_blank(),
+                          labels=c('Phase 1','Phase 2')) + 
+        theme(legend.position="top") + 
+        scale_x_discrete(labels=c('Incongruent','Congruent')) +
+        ylab("Percent correct in sessions 1&2") + 
+        facet_grid(arrangement_pairs ~ concept_phase_1)
+
+
+# Plot just the BT, diff arrangmenets
+results_table_qc_pass_ptp_analyzed_gathered %>% 
+        filter(concept_phase_1 == 'beak_tail_space') %>%
+        reorder_levels(arr_phase_1_1, order = c("1", "14", "3", "15")) %>%
+        ggplot(aes(x=congruency,y=ses_1_2_perf,fill=phase)) +
+        geom_boxplot(width=0.5,notch=FALSE,outlier.shape = NA) + 
+        geom_point(pch=21,
+                   position = position_jitterdodge(dodge.width=0.5,
+                                                   jitter.width=0.1)) +
+        # stat_summary(fun=mean, geom="point", shape=20, 
+        #              size=5, color="red", fill="red") +
+        ylab("ses 1&2 acc") + 
+        xlab('') +
+        theme(axis.text.x = element_text(size=10),
+              axis.text.y = element_text(size=10)) + 
+        scale_fill_manual(values=c('#045a8d','#d0d1e6'),
+                          name=element_blank(),
+                          labels=c('Phase 1','Phase 2')) + 
+        facet_wrap(~arr_phase_1_1, ncol = 4,
+                   labeller = labeller(arr_phase_1_1 = c("1" = "Arr1",
+                                                         "14" = "Arr2",
+                                                         "3" = "Arr3",
+                                                         "15" = "Arr4"))) +        
+        theme(legend.position="top") + 
+        scale_x_discrete(labels=c('Incongruent','Congruent')) + 
+        ylab("Percent correct in sessions 1&2") + 
+        ggtitle('Beak Tail Space') + 
+        coord_cartesian(ylim=(c(0.5,1.0)))
+
+# Plot just the NL, diff arrangmenets
+results_table_qc_pass_ptp_analyzed_gathered %>% 
+        filter(concept_phase_1 == 'neck_legs_space') %>%
+        reorder_levels(arr_phase_1_1, order = c("1", "14", "3", "15")) %>%
+        ggplot(aes(x=congruency,y=ses_1_2_perf,fill=phase)) +
+        geom_boxplot(width=0.5,notch=FALSE,outlier.shape = NA) + 
+        geom_point(pch=21,
+                   position = position_jitterdodge(dodge.width=0.5,
+                                                   jitter.width=0.1)) +
+        # stat_summary(fun=mean, geom="point", shape=20, 
+        #              size=5, color="red", fill="red") +
+        ylab("ses 1&2 acc") + 
+        xlab('') +
+        theme(axis.text.x = element_text(size=10),
+              axis.text.y = element_text(size=10)) + 
+        scale_fill_manual(values=c('#045a8d','#d0d1e6'),
+                          name=element_blank(),
+                          labels=c('Phase 1','Phase 2')) + 
+        facet_wrap(~arr_phase_1_1, ncol = 4,
+                   labeller = labeller(arr_phase_1_1 = c("1" = "Arr1",
+                                                         "14" = "Arr2",
+                                                         "3" = "Arr3",
+                                                         "15" = "Arr4"))) +        
+        theme(legend.position="top") + 
+        scale_x_discrete(labels=c('Incongruent','Congruent')) + 
+        ylab("Percent correct in sessions 1&2") + 
+        ggtitle('Neck Legs Space') + 
+        coord_cartesian(ylim=(c(0.5,1.0)))
+
+
+
+# Basic summary table
+# results_table_qc_pass_ptp_analyzed_gathered %>%
+#         reorder_levels(arr_phase_1_1, order = c("1", "14", "3", "15")) %>%
+#         group_by(arr_phase_1_1,congruency,phase) %>%
+#         get_summary_stats(ses_1_2_perf, type = 'mean_sd') %>%
+#         knitr::kable() %>%
+#         kable_styling(bootstrap_options = "striped")
+
+```
+
+```{r grid-concept-order-arrangement, fig.width=10, fig.height=10}
+
+# Grid display, showing arr_phase_1_1 by concept order
+results_table_qc_pass_ptp_analyzed_gathered %>% 
+        ggplot(aes(x=congruency,y=ses_1_2_perf,fill=phase)) +
+        geom_boxplot(width=0.5,notch=FALSE,outlier.shape = NA) + 
+        geom_point(pch=21,
+                   position = position_jitterdodge(dodge.width=0.5,
+                                                   jitter.width=0.05)) +
+        # xlab('') +
+        theme(axis.text.x = element_text(size=10),
+              axis.text.y = element_text(size=10)) + 
+        scale_fill_manual(values=c('#045a8d','#d0d1e6'),
+                          name=element_blank(),
+                          labels=c('Phase 1','Phase 2')) + 
+        theme(legend.position="top") + 
+        scale_x_discrete(labels=c('Incongruent','Congruent')) +
+        ylab("Percent correct in sessions 1&2") + 
+        facet_grid(arr_phase_1_1 ~ concept_phase_1)
+
+```
+## Look at performance for individual toys brokend down by concept order INCOMPLETE
+
+```{r individual-targets-incongruent-expt-1-concept-order, fig.height = 5, fig.width = 10}
+
+# Filter to have only sessions 1-2, only incongruent, phase, arrangement, and the target that was the prompt for the trial
+
+long_form_data_qc_pass_ptp %>%
+        filter(experiment == which_expt & 
+                   (session == 1 | session == 2) & 
+                   congruency == 0) %>%
+        select(congruency,arr_phase_1_1,arr_phase_2_1,
+               current_arrangement,concept_phase_1,ptp,
+               phase,session,prompt_img_name,correct) %>%
+        reorder_levels(prompt_img_name, 
+                       order = c("Sledge", "Gingerman", "Bear")) %>%
+        reorder_levels(current_arrangement,
+                       order = c('3','15')) %>%
+        group_by(concept_phase_1,current_arrangement,ptp,phase,prompt_img_name) %>%
+        summarize(avg_correct = mean(correct, na.rm = TRUE)) %>%
+        ggplot(aes(x=current_arrangement,fill=prompt_img_name, y=avg_correct)) +
+        geom_violin() +
+        stat_summary(fun=mean, geom="point", shape=19, size=2, 
+                     position=position_dodge(0.9)) +
+        stat_summary(fun=median, geom="point", shape=6, size=2, position=position_dodge(0.9)) +
+        theme(
+                legend.position="top",
+                legend.title=element_blank(),
+                plot.title = element_text(size=11),
+                axis.title.x=element_blank()
+                ) + 
+        # scale_x_discrete(labels=c('Arr3','Arr4')) +
+        ylab('% Correct Sessions 1&2') + 
+        facet_wrap(~phase) 
+        
+
+```
+
+
+
+```{r phase-1-concept-diff-by-arrangement, fig.width=15}
+
+
+# Just phase 1 data for sessions 1 and 2, by arrangement order
+results_table_qc_pass_ptp_analyzed %>%
+        ggplot(aes(x=arr_phase_1_1,y=phase_1_ses_1_2_perf,fill=concept_phase_1)) + 
+        geom_boxplot(width=0.5,outlier.shape = NA) + 
+        # geom_dotplot(binaxis='y', stackdir='center',
+        #              stackratio=1, dotsize=0.5, fill="black") +
+        geom_point(pch=21,
+                   position = position_jitterdodge(dodge.width=0.5,
+                                                   jitter.width=0.1)) +    
+        # stat_summary(fun=mean, geom="point", shape=20, size=5, color="red", fill="red") +
+        ylab("Phase 1, ses 1&2 acc") + 
+        # xlab('Arrangement for Phase 1') + 
+        # scale_x_discrete(labels=c('Arr1','Arr2','Arr3','Arr4')) +
+        # coord_cartesian(ylim=(c(0.8,0.9))) +
+        theme(axis.text.x = element_text(size=14),
+              axis.text.y = element_text(size=14)) +
+        facet_wrap(~congruency)
+        # ggtitle("Phase 1 scores, Arrangement Order")
+
+
+# Basic summary table
+results_table_qc_pass_ptp_analyzed %>%
+        group_by(congruency,arr_phase_1_1,concept_phase_1) %>%
+        get_summary_stats(phase_1_ses_1_2_perf, type = 'median') %>%
+        knitr::kable() %>%
+        kable_styling(bootstrap_options = "striped")
+
+
+```
+
