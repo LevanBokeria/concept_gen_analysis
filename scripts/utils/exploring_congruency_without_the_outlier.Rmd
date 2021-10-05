@@ -1,5 +1,5 @@
 ---
-title: "Exploring"
+title: "Exploring without the outlier"
 output: bookdown::html_document2
 ---
 
@@ -63,33 +63,97 @@ which_expt <- 1
 ```
 
 
-```{r exclude-sledge}
+```{r get-ses-1-2-with-and-without-the-outlier}
 
-# We have to exclude the sledge, and recalculate all the variables in the results_table_all_ptp_analyzed
-
-
-# Plan is to recalculate phase 2 ses 1-2 for each participant, and then substitute that new data in the existing tables
-
-summary_table <- 
+# Calculate the variables for the full data
+summary_table_all_data <- 
         long_form_data_qc_pass_ptp_analyzed %>%
-        filter(experiment == which_expt,
-               session == c(1,2)) %>%
-        filter(prompt_img_name != 'Sledge') %>% 
-        group_by(congruency,ptp,phase,session) %>%
+        filter(session == c(1,2)) %>%
+        droplevels() %>%
+        group_by(experiment,
+                 congruency,
+                 arr_phase_1_name,
+                 concept_phase_1,
+                 ptp,
+                 phase,
+                 session) %>%
         get_summary_stats(correct,type='mean')
 
-ses_1_2_perf_table <- 
-        summary_table %>%
-        group_by(congruency,ptp,phase) %>%
-        get_summary_stats(mean,type='mean') %>%
-        select(-c(variable,n)) %>%
-        rename(session_1_2_perf = mean)
+summary_table_no_outlier <- 
+        long_form_data_qc_pass_ptp_analyzed %>%
+        filter(session == c(1,2)) %>%
+        droplevels() %>%
+        filter(case_when(
+                experiment == 1 ~ prompt_img_name != 'Sledge',
+                experiment == 2 ~ prompt_img_name != 'Gingerman'
+                )
+               ) %>%
+        group_by(experiment,
+                 congruency,
+                 arr_phase_1_name,
+                 concept_phase_1,
+                 ptp,
+                 phase,
+                 session) %>%
+        get_summary_stats(correct,type='mean')        
         
-ses_1_2_perf_table_wide <-
-        ses_1_2_perf_table %>%
+```
+
+```{r merge-data-frames}
+
+summary_table <-
+        merge(summary_table_all_data,
+              summary_table_no_outlier,
+              by=c('ptp',
+                   'congruency',
+                   'concept_phase_1',
+                   'phase',
+                   'session',
+                   'arr_phase_1_name',
+                   'experiment',
+                   'variable'),
+              suffixes = c('_all_data',
+                           '_no_outlier')) %>%
+        select(-variable)
+
+```
+
+```{r get-ses-1-2-average}
+
+summary_table_ses_1_2_avg <-
+        summary_table %>%
+        group_by(experiment,
+                 congruency,
+                 arr_phase_1_name,
+                 concept_phase_1,
+                 ptp,
+                 phase) %>%
+        summarise(
+                across(.cols = c(mean_all_data,
+                                 mean_no_outlier),
+               .fns = mean,
+               .names = c('ses_1_2_{.col}'))
+               ) %>%
+        ungroup()
+
+summary_table_ses_1_2_avg_wide_phase <-
+        summary_table_ses_1_2_avg %>%
         pivot_wider(names_from = phase,
                     names_prefix = 'phase_',
-                    values_from = session_1_2_perf)
+                    values_from = c(
+                            ses_1_2_mean_all_data,
+                            ses_1_2_mean_no_outlier
+                    )) %>%
+        mutate(phase_2_min_phase_1_ses_1_2_mean_all_data = 
+                       ses_1_2_mean_all_data_phase_2 - 
+                       ses_1_2_mean_all_data_phase_1,
+               phase_2_min_phase_1_ses_1_2_mean_no_outlier = 
+                       ses_1_2_mean_no_outlier_phase_2 - 
+                       ses_1_2_mean_no_outlier_phase_1)
+
+summary_table_ses_1_2_avg_long_phase <-
+        summary_table_ses_1_2_avg_wide_phase %>%
+        pivot_longer()
 
 ses_1_2_perf_table_wide <- 
         ses_1_2_perf_table_wide %>%
@@ -106,13 +170,44 @@ ses_1_2_perf_table_long <-
 
 ```
 
-```{r plot-this}
+```{r plot-this, fig.width=6, fig.height=4}
 
 ses_1_2_perf_table_long %>%
         filter(var_type == 'phase_2_min_phase_1') %>%
         ggplot(aes(x=congruency,y=ses_1_2_perf)) +
-        geom_boxplot(notch = TRUE) +
-        geom_point()
+        geom_boxplot(notch = TRUE,
+                     width = 0.3) +
+        geom_point(alpha = 0.2) + 
+        facet_wrap(~arr_phase_1_name) + 
+        stat_summary(fun=mean, 
+                     geom="point",
+                     shape=20, 
+                     size=5, 
+                     color="blue",
+                     fill="blue")        
+
+
+```
+
+```{r plot-by-phase, fig.width=10, fig.height=4}
+
+ses_1_2_perf_table_long %>%
+        filter(var_type != 'phase_2_min_phase_1') %>%
+        ggplot(aes(x=var_type,y=ses_1_2_perf,fill=var_type)) +
+        geom_boxplot(notch = TRUE,
+                     width = 0.3) +
+        geom_point(alpha = 0.2) +
+        geom_line(aes(group=ptp),
+                  alpha = 0.2) +
+        stat_summary(fun=mean, 
+                     geom="point",
+                     shape=20, 
+                     size=5, 
+                     color="blue",
+                     fill="blue") + 
+        facet_wrap(arr_phase_1_name~congruency,
+                   labeller = label_both,
+                   nrow = 1)
 
 
 ```
