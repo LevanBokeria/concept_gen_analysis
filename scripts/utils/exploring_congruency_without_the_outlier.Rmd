@@ -40,17 +40,16 @@ long_form_data_all_ptp_analyzed <-
 long_form_data_qc_pass_ptp_analyzed <- 
     outList$long_form_data_qc_pass_ptp_analyzed
 
-results_table_all_ptp_analyzed <- 
-        outList$results_table_all_ptp_analyzed
-results_table_qc_pass_ptp_analyzed <- 
-    outList$results_table_qc_pass_ptp_analyzed
-results_table_qc_pass_ptp_analyzed_gathered <- 
-    outList$results_table_qc_pass_ptp_analyzed_gathered
+resultstable_all_ptp_analyzed <- 
+        outList$resultstable_all_ptp_analyzed
+resultstable_qc_pass_ptp_analyzed <- 
+    outList$resultstable_qc_pass_ptp_analyzed
+resultstable_qc_pass_ptp_analyzed_gathered <- 
+    outList$resultstable_qc_pass_ptp_analyzed_gathered
 
 rm(outList)
 
 ```
-
 
 
 # Plots for experiment 1:
@@ -66,7 +65,7 @@ which_expt <- 1
 ```{r get-ses-1-2-with-and-without-the-outlier}
 
 # Calculate the variables for the full data
-summary_table_all_data <- 
+st_all_data <- 
         long_form_data_qc_pass_ptp_analyzed %>%
         filter(session == c(1,2)) %>%
         droplevels() %>%
@@ -77,9 +76,12 @@ summary_table_all_data <-
                  ptp,
                  phase,
                  session) %>%
-        get_summary_stats(correct,type='mean')
-
-summary_table_no_outlier <- 
+        summarise(mean = mean(correct))
+        
+        
+        
+# Now for no outlier
+st_no_outlier <- 
         long_form_data_qc_pass_ptp_analyzed %>%
         filter(session == c(1,2)) %>%
         droplevels() %>%
@@ -95,15 +97,32 @@ summary_table_no_outlier <-
                  ptp,
                  phase,
                  session) %>%
-        get_summary_stats(correct,type='mean')        
+        summarise(mean = mean(correct))
+
+# Calculate average for each toy separately
+st_by_target <- 
+        long_form_data_qc_pass_ptp_analyzed %>%
+        filter(session == c(1,2)) %>%
+        droplevels() %>%
+        group_by(experiment,
+                 congruency,
+                 arr_phase_1_name,
+                 concept_phase_1,
+                 ptp,
+                 phase,
+                 session,
+                 prompt_img_name) %>%
+        summarise(mean = mean(correct))
+        # get_summary_stats(correct,type='mean')
+
         
 ```
 
 ```{r merge-data-frames}
 
-summary_table <-
-        merge(summary_table_all_data,
-              summary_table_no_outlier,
+st <-
+        merge(st_all_data,
+              st_no_outlier,
               by=c('ptp',
                    'congruency',
                    'concept_phase_1',
@@ -118,10 +137,154 @@ summary_table <-
 
 ```
 
+```{r turn-long}
+st_long_mean_type <-
+        st %>%
+        select(-c(n_all_data,n_no_outlier)) %>%
+        pivot_longer(cols = c(mean_all_data,
+                              mean_no_outlier),
+                     names_to = 'mean_type',
+                     values_to = 'mean_accuracy')
+
+# Now, calculate ses 1 2 average
+st_ses_1_2_mean <- 
+        st_long_mean_type %>%
+        group_by(experiment,
+                 congruency,
+                 arr_phase_1_name,
+                 concept_phase_1,
+                 ptp,
+                 phase,
+                 mean_type) %>%
+        summarise(ses_1_2_mean = mean(mean_accuracy)) %>%
+        ungroup()
+
+st_phase_diff_long <-
+        st_ses_1_2_mean %>%
+        pivot_wider(names_from = phase,
+                    names_prefix = 'phase_',
+                    values_from = ses_1_2_mean) %>% 
+        mutate(phase_2_min_phase_1 = phase_2 - phase_1) %>% 
+        pivot_longer(cols = c(phase_1,
+                              phase_2,
+                              phase_2_min_phase_1),
+                     names_to = 'phase_type',
+                     values_to = 'ses_1_2_mean')
+
+# Ses 1 2 avg for each target
+st_by_target_ses_1_2_mean <-
+        st_by_target %>%
+        group_by(experiment,
+                 congruency,
+                 arr_phase_1_name,
+                 concept_phase_1,
+                 ptp,
+                 phase,
+                 prompt_img_name) %>%
+        summarise(ses_1_2_mean = mean(mean))
+```
+
+```{r congruency-plots, fig.height=8, fig.width=6}
+
+st_phase_diff_long %>%
+        filter(phase_type == 'phase_2_min_phase_1') %>%
+        ggplot(aes(x=congruency,y=ses_1_2_mean)) +
+        geom_violin() +
+        geom_boxplot(notch=TRUE,
+                     outlier.shape = NA,
+                     width=0.4) +
+        geom_jitter(width=0.2,
+                    alpha=0.2,
+                    height = 0) +
+        stat_summary(fun=mean, 
+                     geom="point",
+                     shape=20, 
+                     size=5, 
+                     color="blue",
+                     fill="blue") +        
+        facet_grid(mean_type~experiment,
+                   labeller = label_both)
+
+# st_by_target_phase_diff_long %>%
+#         filter(phase_type == 'phase_2_min_phase_1') %>%
+#         ggplot(aes(x=congruency,y=ses_1_2_mean)) +
+#         geom_violin() +
+#         geom_boxplot(notch=TRUE,
+#                      outlier.shape = NA,
+#                      width=0.4) +
+#         geom_jitter(width=0.2,
+#                     alpha=0.2,
+#                     height = 0) +
+#         stat_summary(fun=mean, 
+#                      geom="point",
+#                      shape=20, 
+#                      size=5, 
+#                      color="blue",
+#                      fill="blue") +        
+#         facet_grid(prompt_img_name~experiment,
+#                    labeller = label_both)
+
+```
+
+```{r congruency-by-arr-plots, fig.height=6, fig.width=8}
+
+st_phase_diff_long %>%
+        filter(phase_type == 'phase_2_min_phase_1') %>%
+        ggplot(aes(x=congruency,y=ses_1_2_mean)) +
+        geom_violin() +
+        geom_boxplot(notch=TRUE,
+                     outlier.shape = NA,
+                     width=0.4) +
+        geom_jitter(width=0.2,
+                    alpha=0.2,
+                    height = 0) +
+        stat_summary(fun=mean, 
+                     geom="point",
+                     shape=20, 
+                     size=5, 
+                     color="blue",
+                     fill="blue") +        
+        facet_grid(mean_type~arr_phase_1_name,
+                   labeller = label_both)
+
+# st_by_target_phase_diff_long %>%
+#         filter(phase_type == 'phase_2_min_phase_1') %>%
+#         ggplot(aes(x=congruency,y=ses_1_2_mean)) +
+#         geom_violin() +
+#         geom_boxplot(notch=TRUE,
+#                      outlier.shape = NA,
+#                      width=0.4) +
+#         geom_jitter(width=0.2,
+#                     alpha=0.2,
+#                     height = 0) +
+#         stat_summary(fun=mean, 
+#                      geom="point",
+#                      shape=20, 
+#                      size=5, 
+#                      color="blue",
+#                      fill="blue") +        
+#         facet_grid(prompt_img_name~arr_phase_1_name,
+#                    labeller = label_both)
+
+
+
+```
+
+```{r calc-for-each-target}
+
+
+
+
+
+
+```
+
+
+
 ```{r get-ses-1-2-average}
 
-summary_table_ses_1_2_avg <-
-        summary_table %>%
+st_ses_1_2_avg <-
+        st %>%
         group_by(experiment,
                  congruency,
                  arr_phase_1_name,
@@ -136,8 +299,8 @@ summary_table_ses_1_2_avg <-
                ) %>%
         ungroup()
 
-summary_table_ses_1_2_avg_wide_phase <-
-        summary_table_ses_1_2_avg %>%
+st_ses_1_2_avg_wide_phase <-
+        st_ses_1_2_avg %>%
         pivot_wider(names_from = phase,
                     names_prefix = 'phase_',
                     values_from = c(
@@ -151,8 +314,8 @@ summary_table_ses_1_2_avg_wide_phase <-
                        ses_1_2_mean_no_outlier_phase_2 - 
                        ses_1_2_mean_no_outlier_phase_1)
 
-summary_table_ses_1_2_avg_long_phase <-
-        summary_table_ses_1_2_avg_wide_phase %>%
+st_ses_1_2_avg_long_phase <-
+        st_ses_1_2_avg_wide_phase %>%
         pivot_longer()
 
 ses_1_2_perf_table_wide <- 
@@ -165,8 +328,8 @@ ses_1_2_perf_table_long <-
         pivot_longer(cols = c(phase_1,
                               phase_2,
                               phase_2_min_phase_1),
-                     names_to = 'var_type',
-                     values_to = 'ses_1_2_perf')
+                     namesto = 'var_type',
+                     valuesto = 'ses_1_2_perf')
 
 ```
 
@@ -217,7 +380,7 @@ ses_1_2_perf_table_long %>%
 
 ```{r congruency-effect-expt-1, fig.width=3, fig.height=3}
 
-results_table_qc_pass_ptp_analyzed %>%
+resultstable_qc_pass_ptp_analyzed %>%
         filter(experiment == which_expt) %>%
         filter()
         ggplot(aes(x=congruency,
@@ -239,7 +402,7 @@ results_table_qc_pass_ptp_analyzed %>%
               axis.title.x=element_blank())
 
 # Basic summary table
-results_table_qc_pass_ptp_analyzed %>%
+resultstable_qc_pass_ptp_analyzed %>%
         filter(experiment == which_expt) %>%
         group_by(congruency) %>%
         get_summary_stats(phase_2_min_phase_1_ses_1_2_perf, type = 'mean_sd') %>%
@@ -250,12 +413,12 @@ results_table_qc_pass_ptp_analyzed %>%
 
 # Analyze session differences
 ses_1_2_perf_congruent_1_arr_1_2 <-
-    results_table_qc_pass_ptp_analyzed %>%
+    resultstable_qc_pass_ptp_analyzed %>%
     filter(experiment == which_expt & congruency == 1) %>%
     select(phase_2_min_phase_1_ses_1_2_perf) %>% .[[1]]
 
 ses_1_2_perf_congruent_0_arr_1_2 <-
-    results_table_qc_pass_ptp_analyzed %>%
+    resultstable_qc_pass_ptp_analyzed %>%
     filter(experiment == which_expt & congruency == 0) %>%
     select(phase_2_min_phase_1_ses_1_2_perf) %>% .[[1]]
 
@@ -296,7 +459,7 @@ effect_size_arr_1_2 <- (mean(ses_1_2_perf_congruent_1_arr_1_2) - mean(ses_1_2_pe
 ## The basic congruency effect, broken in phases
 
 ```{r congruency-effect-expt-1-by-phases, fig.width=5}
-results_table_qc_pass_ptp_analyzed_gathered %>% 
+resultstable_qc_pass_ptp_analyzed_gathered %>% 
         filter(experiment == which_expt) %>%
         ggplot(aes(x=congruency,
                    y=ses_1_2_perf,
@@ -316,7 +479,7 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
         scale_x_discrete(labels=c('Incongruent','Congruent'))
 
 # Basic summary table
-results_table_qc_pass_ptp_analyzed_gathered %>%
+resultstable_qc_pass_ptp_analyzed_gathered %>%
         filter(experiment == which_expt) %>%
         group_by(congruency,phase) %>%
         get_summary_stats(ses_1_2_perf, type = 'mean_sd') %>%
@@ -329,7 +492,7 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
 
 ```{r congruency-effect-expt-1-by-arrangements, fig.width=5}
 
-results_table_qc_pass_ptp_analyzed %>%
+resultstable_qc_pass_ptp_analyzed %>%
         filter(experiment == which_expt) %>%
         ggplot(aes(x=congruency,
                    y=phase_2_min_phase_1_ses_1_2_perf,
@@ -353,7 +516,7 @@ results_table_qc_pass_ptp_analyzed %>%
                                                          "2" = "Start with Arr2")))
 
 # Basic summary table
-results_table_qc_pass_ptp_analyzed %>%
+resultstable_qc_pass_ptp_analyzed %>%
         filter(experiment == which_expt) %>%
         group_by(arr_phase_1_name,congruency) %>%
         get_summary_stats(phase_2_min_phase_1_ses_1_2_perf, type = 'mean_sd') %>%
@@ -362,16 +525,16 @@ results_table_qc_pass_ptp_analyzed %>%
 
 # Bayes factor analysis
 
-data_arr_1_c1 <- results_table_qc_pass_ptp_analyzed %>%
+data_arr_1_c1 <- resultstable_qc_pass_ptp_analyzed %>%
     filter(arr_phase_1_name == 1 & congruency == 1) %>%
     select(phase_2_min_phase_1_ses_1_2_perf) %>% .[[1]]
-data_arr_1_c0 <- results_table_qc_pass_ptp_analyzed %>%
+data_arr_1_c0 <- resultstable_qc_pass_ptp_analyzed %>%
     filter(arr_phase_1_name == 1 & congruency == 0) %>%
     select(phase_2_min_phase_1_ses_1_2_perf) %>% .[[1]]
-data_arr_2_c1 <- results_table_qc_pass_ptp_analyzed %>%
+data_arr_2_c1 <- resultstable_qc_pass_ptp_analyzed %>%
     filter(arr_phase_1_name == 2 & congruency == 1) %>%
     select(phase_2_min_phase_1_ses_1_2_perf) %>% .[[1]]
-data_arr_2_c0 <- results_table_qc_pass_ptp_analyzed %>%
+data_arr_2_c0 <- resultstable_qc_pass_ptp_analyzed %>%
     filter(arr_phase_1_name == 2 & congruency == 0) %>%
     select(phase_2_min_phase_1_ses_1_2_perf) %>% .[[1]]
 
@@ -392,7 +555,7 @@ BF_arr_2_first <- ttestBF(
 ## The basic congruency effect, broken in phases, arrangement order
 
 ```{r congruency-effect-expt-1-by-phases-by-arrangements, fig.width=5}
-results_table_qc_pass_ptp_analyzed_gathered %>% 
+resultstable_qc_pass_ptp_analyzed_gathered %>% 
         filter(experiment == which_expt) %>%
         ggplot(aes(x=congruency,
                    y=ses_1_2_perf,
@@ -415,7 +578,7 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
                                                  "2" = "Start with Arr2")))
 
 # Basic summary table
-results_table_qc_pass_ptp_analyzed_gathered %>%
+resultstable_qc_pass_ptp_analyzed_gathered %>%
         group_by(experiment,congruency,phase) %>%
         get_summary_stats(ses_1_2_perf, type = 'mean_sd') %>%
         knitr::kable() %>%
@@ -479,19 +642,19 @@ long_form_data_qc_pass_ptp_analyzed %>%
 ```{r expt1-anova-3-way}
 
 # Compute the mean and the standard deviation (SD) of by groups:
-results_table_qc_pass_ptp_analyzed %>%  
+resultstable_qc_pass_ptp_analyzed %>%  
         filter(experiment == which_expt) %>%
         group_by(congruency, arr_phase_1_name, concept_phase_1) %>%
         get_summary_stats(phase_2_min_phase_1_ses_1_2_perf, type = "mean_sd")
 
 # Identify outliers
-results_table_qc_pass_ptp_analyzed %>%  
+resultstable_qc_pass_ptp_analyzed %>%  
         filter(experiment == which_expt) %>%
         group_by(congruency, arr_phase_1_name, concept_phase_1) %>%
         identify_outliers(phase_2_min_phase_1_ses_1_2_perf)
 
 # Normality tests and assumptions
-model  <- results_table_qc_pass_ptp_analyzed %>%
+model  <- resultstable_qc_pass_ptp_analyzed %>%
         filter(experiment == which_expt) %>%
         lm(phase_2_min_phase_1_ses_1_2_perf ~ 
                      congruency*
@@ -508,7 +671,7 @@ ggqqplot(residuals(model))
 shapiro_test(residuals(model))
 
 # QQ plots for each cell
-results_table_qc_pass_ptp_analyzed %>%  
+resultstable_qc_pass_ptp_analyzed %>%  
         filter(experiment == which_expt) %>%
         group_by(congruency, arr_phase_1_name, concept_phase_1) %>%
         ggqqplot("phase_2_min_phase_1_ses_1_2_perf", ggtheme = theme_bw()) +
@@ -516,7 +679,7 @@ results_table_qc_pass_ptp_analyzed %>%
                    labeller = "label_both")
 
 # Homogeneity of variance
-results_table_qc_pass_ptp_analyzed %>%  
+resultstable_qc_pass_ptp_analyzed %>%  
         filter(experiment == which_expt) %>%
         levene_test(phase_2_min_phase_1_ses_1_2_perf ~ 
                             congruency*
@@ -525,14 +688,14 @@ results_table_qc_pass_ptp_analyzed %>%
 
 
 # Do the test of normality by each group
-results_table_qc_pass_ptp_analyzed %>%  
+resultstable_qc_pass_ptp_analyzed %>%  
         filter(experiment == which_expt) %>%
         group_by(congruency, arr_phase_1_name, concept_phase_1) %>%
         shapiro_test(phase_2_min_phase_1_ses_1_2_perf)
 
 
 
-aov_3_expt_1 <- results_table_qc_pass_ptp_analyzed %>%
+aov_3_expt_1 <- resultstable_qc_pass_ptp_analyzed %>%
         filter(experiment == which_expt) %>%
         anova_test(
         phase_2_min_phase_1_ses_1_2_perf ~
@@ -547,10 +710,10 @@ aov_3_expt_1 %>%
 
 ```{r emmeans-followup}
 
-pwc <- results_table_qc_pass_ptp_analyzed %>%
+pwc <- resultstable_qc_pass_ptp_analyzed %>%
         filter(experiment == which_expt) %>%
     group_by(arr_phase_1_name) %>%
-  emmeans_test(phase_2_min_phase_1_ses_1_2_perf ~ congruency, p.adjust.method = "bonferroni") 
+  emmeanstest(phase_2_min_phase_1_ses_1_2_perf ~ congruency, p.adjust.method = "bonferroni") 
 pwc %>%
     knitr::kable(caption = 'Expt1: congruency -X- concept -X- arrangement') %>%
     kable_styling(bootstrap_options = "striped")
@@ -561,7 +724,7 @@ pwc %>%
 
 ```{r anova-bayesian-expt1}
 
-data_for_bayes_anova <- results_table_qc_pass_ptp_analyzed %>% 
+data_for_bayes_anova <- resultstable_qc_pass_ptp_analyzed %>% 
         filter(experiment == which_expt) %>%
         rename(
                 Cg = congruency,
@@ -722,7 +885,7 @@ which_expt <- 2
 
 ```{r congruency-effect-expt-2, fig.width=5}
 
-results_table_qc_pass_ptp_analyzed %>%
+resultstable_qc_pass_ptp_analyzed %>%
         filter(experiment == which_expt) %>%
         ggplot(aes(x=congruency,
                    y=phase_2_min_phase_1_ses_1_2_perf,
@@ -743,7 +906,7 @@ results_table_qc_pass_ptp_analyzed %>%
               axis.title.x=element_blank())
 
 # Basic summary table
-results_table_qc_pass_ptp_analyzed %>%
+resultstable_qc_pass_ptp_analyzed %>%
         filter(experiment == which_expt) %>%
         group_by(congruency) %>%
         get_summary_stats(phase_2_min_phase_1_ses_1_2_perf, type = 'mean_sd') %>%
@@ -754,12 +917,12 @@ results_table_qc_pass_ptp_analyzed %>%
 
 # Analyze session differences
 ses_1_2_perf_congruent_1_arr_1_2 <-
-    results_table_qc_pass_ptp_analyzed %>%
+    resultstable_qc_pass_ptp_analyzed %>%
     filter(experiment == which_expt & congruency == 1) %>%
     select(phase_2_min_phase_1_ses_1_2_perf) %>% .[[1]]
 
 ses_1_2_perf_congruent_0_arr_1_2 <-
-    results_table_qc_pass_ptp_analyzed %>%
+    resultstable_qc_pass_ptp_analyzed %>%
     filter(experiment == which_expt & congruency == 0) %>%
     select(phase_2_min_phase_1_ses_1_2_perf) %>% .[[1]]
 
@@ -800,7 +963,7 @@ effect_size_arr_1_2 <- (mean(ses_1_2_perf_congruent_1_arr_1_2) - mean(ses_1_2_pe
 ## The basic congruency effect, broken in phases
 
 ```{r congruency-effect-expt-2-by-phases, fig.width=5}
-results_table_qc_pass_ptp_analyzed_gathered %>% 
+resultstable_qc_pass_ptp_analyzed_gathered %>% 
         filter(experiment == which_expt) %>%
         ggplot(aes(x=congruency,
                    y=ses_1_2_perf,
@@ -820,7 +983,7 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
         scale_x_discrete(labels=c('Incongruent','Congruent'))
 
 # Basic summary table
-results_table_qc_pass_ptp_analyzed_gathered %>%
+resultstable_qc_pass_ptp_analyzed_gathered %>%
         filter(experiment == which_expt) %>%
         group_by(congruency,phase) %>%
         get_summary_stats(ses_1_2_perf, type = 'mean_sd') %>%
@@ -833,7 +996,7 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
 
 ```{r congruency-effect-expt-2-by-arrangements, fig.width=5}
 
-results_table_qc_pass_ptp_analyzed %>%
+resultstable_qc_pass_ptp_analyzed %>%
         filter(experiment == which_expt) %>%
         ggplot(aes(x=congruency,
                    y=phase_2_min_phase_1_ses_1_2_perf,
@@ -857,7 +1020,7 @@ results_table_qc_pass_ptp_analyzed %>%
                                                          "4" = "Start with Arr4")))
 
 # Basic summary table
-results_table_qc_pass_ptp_analyzed %>%
+resultstable_qc_pass_ptp_analyzed %>%
         filter(experiment == which_expt) %>%
         group_by(arr_phase_1_name,congruency) %>%
         get_summary_stats(phase_2_min_phase_1_ses_1_2_perf, type = 'mean_sd') %>%
@@ -866,16 +1029,16 @@ results_table_qc_pass_ptp_analyzed %>%
 
 # Bayes factor analysis
 
-data_arr_3_c1 <- results_table_qc_pass_ptp_analyzed %>%
+data_arr_3_c1 <- resultstable_qc_pass_ptp_analyzed %>%
     filter(arr_phase_1_name == 3 & congruency == 1) %>%
     select(phase_2_min_phase_1_ses_1_2_perf) %>% .[[1]]
-data_arr_3_c0 <- results_table_qc_pass_ptp_analyzed %>%
+data_arr_3_c0 <- resultstable_qc_pass_ptp_analyzed %>%
     filter(arr_phase_1_name == 3 & congruency == 0) %>%
     select(phase_2_min_phase_1_ses_1_2_perf) %>% .[[1]]
-data_arr_4_c1 <- results_table_qc_pass_ptp_analyzed %>%
+data_arr_4_c1 <- resultstable_qc_pass_ptp_analyzed %>%
     filter(arr_phase_1_name == 4 & congruency == 1) %>%
     select(phase_2_min_phase_1_ses_1_2_perf) %>% .[[1]]
-data_arr_4_c0 <- results_table_qc_pass_ptp_analyzed %>%
+data_arr_4_c0 <- resultstable_qc_pass_ptp_analyzed %>%
     filter(arr_phase_1_name == 4 & congruency == 0) %>%
     select(phase_2_min_phase_1_ses_1_2_perf) %>% .[[1]]
 
@@ -898,7 +1061,7 @@ BF_arr_4_first <- ttestBF(
 ## The basic congruency effect, broken in phases, arrangement order
 
 ```{r congruency-effect-expt-2-by-phases-by-arrangements, fig.width=5}
-results_table_qc_pass_ptp_analyzed_gathered %>% 
+resultstable_qc_pass_ptp_analyzed_gathered %>% 
         filter(experiment == which_expt) %>%
         ggplot(aes(x=congruency,
                    y=ses_1_2_perf,
@@ -921,7 +1084,7 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
                                                  "4" = "Start with Arr4")))
 
 # Basic summary table
-results_table_qc_pass_ptp_analyzed_gathered %>%
+resultstable_qc_pass_ptp_analyzed_gathered %>%
         group_by(experiment,congruency,phase) %>%
         get_summary_stats(ses_1_2_perf, type = 'mean_sd') %>%
         knitr::kable() %>%
@@ -975,19 +1138,19 @@ long_form_data_qc_pass_ptp_analyzed %>%
 ```{r expt2-anova-3-way-frequentist}
 
 # Compute the mean and the standard deviation (SD) of by groups:
-results_table_qc_pass_ptp_analyzed %>%  
+resultstable_qc_pass_ptp_analyzed %>%  
         filter(experiment == which_expt) %>%
         group_by(congruency, arr_phase_1_name, concept_phase_1) %>%
         get_summary_stats(phase_2_min_phase_1_ses_1_2_perf, type = "mean_sd")
 
 # Identify outliers
-results_table_qc_pass_ptp_analyzed %>%  
+resultstable_qc_pass_ptp_analyzed %>%  
         filter(experiment == which_expt) %>%
         group_by(congruency, arr_phase_1_name, concept_phase_1) %>%
         identify_outliers(phase_2_min_phase_1_ses_1_2_perf)
 
 # Normality tests and assumptions
-model  <- results_table_qc_pass_ptp_analyzed %>%
+model  <- resultstable_qc_pass_ptp_analyzed %>%
         filter(experiment == which_expt) %>%
         lm(phase_2_min_phase_1_ses_1_2_perf ~ 
                      congruency*
@@ -1001,7 +1164,7 @@ ggqqplot(residuals(model))
 shapiro_test(residuals(model))
 
 # QQ plots for each cell
-results_table_qc_pass_ptp_analyzed %>%  
+resultstable_qc_pass_ptp_analyzed %>%  
         filter(experiment == which_expt) %>%
         group_by(congruency, arr_phase_1_name, concept_phase_1) %>%
         ggqqplot("phase_2_min_phase_1_ses_1_2_perf", ggtheme = theme_bw()) +
@@ -1009,7 +1172,7 @@ results_table_qc_pass_ptp_analyzed %>%
                    labeller = "label_both")
 
 # Homogeneity of variance
-results_table_qc_pass_ptp_analyzed %>%  
+resultstable_qc_pass_ptp_analyzed %>%  
         filter(experiment == which_expt) %>%
         levene_test(phase_2_min_phase_1_ses_1_2_perf ~ 
                             congruency*
@@ -1018,14 +1181,14 @@ results_table_qc_pass_ptp_analyzed %>%
 
 
 # Do the test of normality by each group
-results_table_qc_pass_ptp_analyzed %>%  
+resultstable_qc_pass_ptp_analyzed %>%  
         filter(experiment == which_expt) %>%
         group_by(congruency, arr_phase_1_name, concept_phase_1) %>%
         shapiro_test(phase_2_min_phase_1_ses_1_2_perf)
 
 
 
-aov_3_expt_2 <- results_table_qc_pass_ptp_analyzed %>%
+aov_3_expt_2 <- resultstable_qc_pass_ptp_analyzed %>%
         filter(experiment == which_expt) %>%
         anova_test(
         phase_2_min_phase_1_ses_1_2_perf ~
@@ -1042,7 +1205,7 @@ aov_3_expt_2 %>%
 
 ```{r anova-bayesian-expt2}
 
-data_for_bayes_anova <- results_table_qc_pass_ptp_analyzed %>% 
+data_for_bayes_anova <- resultstable_qc_pass_ptp_analyzed %>% 
         filter(experiment == which_expt) %>%
         rename(
                 Cg = congruency,
@@ -1143,7 +1306,7 @@ bayes_aov_arr_4_vs_full %>% knitr::kable(
 
 ```{r phases-separately-arrangements, fig.width = 10}
 
-results_table_qc_pass_ptp_analyzed_gathered %>% 
+resultstable_qc_pass_ptp_analyzed_gathered %>% 
         reorder_levels(arr_phase_1_1, order = c("1", "14", "3", "15")) %>%
         ggplot(aes(x=congruency,y=ses_1_2_perf,fill=phase)) +
         geom_boxplot(width=0.5,notch=FALSE,outlier.shape = NA) + 
@@ -1171,7 +1334,7 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
 
 
 # Basic summary table
-results_table_qc_pass_ptp_analyzed_gathered %>%
+resultstable_qc_pass_ptp_analyzed_gathered %>%
         reorder_levels(arr_phase_1_1, order = c("1", "14", "3", "15")) %>%
         group_by(arr_phase_1_1,congruency,phase) %>%
         get_summary_stats(ses_1_2_perf, type = 'mean_sd') %>%
@@ -1183,7 +1346,7 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
 
 
 ```{r congruency-by-arrangements, message=FALSE}
-results_table_qc_pass_ptp_analyzed %>%
+resultstable_qc_pass_ptp_analyzed %>%
         reorder_levels(arr_phase_1_1, order = c("1", "14", "3", "15")) %>%
         ggplot(aes(x=arr_phase_1_1,y=phase_2_min_phase_1_ses_1_2_perf,
                    fill=congruency)) + 
@@ -1203,7 +1366,7 @@ results_table_qc_pass_ptp_analyzed %>%
         xlab('Phase 1 arrangement')
 
 # Basic summary table
-results_table_qc_pass_ptp_analyzed %>%
+resultstable_qc_pass_ptp_analyzed %>%
         reorder_levels(arr_phase_1_1, order = c("1", "14", "3", "15")) %>%
         group_by(arr_phase_1_1,congruency) %>%
         get_summary_stats(phase_2_min_phase_1_ses_1_2_perf, type = 'mean_sd') %>%
@@ -1216,7 +1379,7 @@ results_table_qc_pass_ptp_analyzed %>%
 
 ```{r phases-separately-concepts, fig.width = 10}
 
-results_table_qc_pass_ptp_analyzed_gathered %>% 
+resultstable_qc_pass_ptp_analyzed_gathered %>% 
         ggplot(aes(x=congruency,y=ses_1_2_perf,fill=phase)) +
         geom_boxplot(width=0.5,notch=FALSE,outlier.shape = NA) + 
         geom_point(pch=21,
@@ -1234,7 +1397,7 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
         ylab("Percent correct in sessions 1&2")
 
 # Grid display, showing experiment by concept order
-results_table_qc_pass_ptp_analyzed_gathered %>% 
+resultstable_qc_pass_ptp_analyzed_gathered %>% 
         ggplot(aes(x=congruency,y=ses_1_2_perf,fill=phase)) +
         geom_boxplot(width=0.5,notch=FALSE,outlier.shape = NA) + 
         geom_point(pch=21,
@@ -1253,7 +1416,7 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
 
 
 # Plot just the BT, diff arrangmenets
-results_table_qc_pass_ptp_analyzed_gathered %>% 
+resultstable_qc_pass_ptp_analyzed_gathered %>% 
         filter(concept_phase_1 == 'beak_tail_space') %>%
         reorder_levels(arr_phase_1_1, order = c("1", "14", "3", "15")) %>%
         ggplot(aes(x=congruency,y=ses_1_2_perf,fill=phase)) +
@@ -1282,7 +1445,7 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
         coord_cartesian(ylim=(c(0.5,1.0)))
 
 # Plot just the NL, diff arrangmenets
-results_table_qc_pass_ptp_analyzed_gathered %>% 
+resultstable_qc_pass_ptp_analyzed_gathered %>% 
         filter(concept_phase_1 == 'neck_legs_space') %>%
         reorder_levels(arr_phase_1_1, order = c("1", "14", "3", "15")) %>%
         ggplot(aes(x=congruency,y=ses_1_2_perf,fill=phase)) +
@@ -1313,7 +1476,7 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
 
 
 # Basic summary table
-# results_table_qc_pass_ptp_analyzed_gathered %>%
+# resultstable_qc_pass_ptp_analyzed_gathered %>%
 #         reorder_levels(arr_phase_1_1, order = c("1", "14", "3", "15")) %>%
 #         group_by(arr_phase_1_1,congruency,phase) %>%
 #         get_summary_stats(ses_1_2_perf, type = 'mean_sd') %>%
@@ -1325,7 +1488,7 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
 ```{r grid-concept-order-arrangement, fig.width=10, fig.height=10}
 
 # Grid display, showing arr_phase_1_1 by concept order
-results_table_qc_pass_ptp_analyzed_gathered %>% 
+resultstable_qc_pass_ptp_analyzed_gathered %>% 
         ggplot(aes(x=congruency,y=ses_1_2_perf,fill=phase)) +
         geom_boxplot(width=0.5,notch=FALSE,outlier.shape = NA) + 
         geom_point(pch=21,
@@ -1386,7 +1549,7 @@ long_form_data_qc_pass_ptp %>%
 
 
 # Just phase 1 data for sessions 1 and 2, by arrangement order
-results_table_qc_pass_ptp_analyzed %>%
+resultstable_qc_pass_ptp_analyzed %>%
         ggplot(aes(x=arr_phase_1_1,y=phase_1_ses_1_2_perf,fill=concept_phase_1)) + 
         geom_boxplot(width=0.5,outlier.shape = NA) + 
         # geom_dotplot(binaxis='y', stackdir='center',
@@ -1406,7 +1569,7 @@ results_table_qc_pass_ptp_analyzed %>%
 
 
 # Basic summary table
-results_table_qc_pass_ptp_analyzed %>%
+resultstable_qc_pass_ptp_analyzed %>%
         group_by(congruency,arr_phase_1_1,concept_phase_1) %>%
         get_summary_stats(phase_1_ses_1_2_perf, type = 'median') %>%
         knitr::kable() %>%
