@@ -569,7 +569,7 @@ which_expt <- 2
 
 ## The Basic congruency effect:
 
-```{r congruency-effect-expt-2, fig.width=5}
+```{r congruency-effect-expt-2, fig.width=3, fig.height=3}
 
 results_table_qc_pass_ptp_analyzed %>%
         filter(experiment == which_expt) %>%
