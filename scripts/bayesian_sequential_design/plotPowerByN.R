@@ -20,7 +20,7 @@ crit2   <- 1/6
 
 nFrom <- 24
 nTo   <- 200
-nBy   <- 8
+nBy   <- 16
 
 altNs   <- seq(nFrom,nTo,by = nBy)
 
@@ -50,6 +50,8 @@ p1 <-
     ggplot(aes(x=maxN,y=percent_support,fill=supports,color=supports)) +
     geom_line() +
     geom_point() + 
+    scale_x_continuous(breaks=seq(nFrom,nTo,nBy)) +
+    scale_y_continuous(breaks=seq(0,100,10)) +      
     ylab('% of simulations') +
     xlab('max N per group') + 
     facet_wrap(~d, labeller = label_both) + 
