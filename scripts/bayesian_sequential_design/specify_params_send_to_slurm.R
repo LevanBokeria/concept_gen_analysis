@@ -28,7 +28,7 @@ d0        <- 0.0
 d1        <- 0.5
 crit1     <- 6
 crit2     <- 1/6
-batchSize <- 8
+batchSize <- 16
 minN      <- 24
 
 # Name for saving folder
@@ -37,7 +37,7 @@ saveFolder <- paste('d1_', d1, '_limpg_', nLimit,
                     '_batchSize_', batchSize, sep='')
 
 # Submit slurm job?
-submitJob = FALSE
+submitJob = T
 
 # Function
 helperfunction <- function(minN, d, crit1, crit2, batchSize, limit){
