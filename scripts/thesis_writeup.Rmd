@@ -306,6 +306,7 @@ long_form_data_qc_pass_ptp_analyzed %>%
                 axis.text.x = element_text(size=11),
                 axis.text.y = element_text(size=11)
                 ) +        
+        scale_fill_discrete(name = "", labels = c("Sledge-PA1", "Gingerbred man-PA2", "Bear-PA3")) +
         scale_x_discrete(labels=c('Arr1','Arr2')) +
         ylab('% Correct Sessions 1&2') + 
         xlab('Arrangement in this phase')
@@ -805,6 +806,7 @@ long_form_data_qc_pass_ptp_analyzed %>%
         stat_summary(fun=median, geom="point", shape=6, size=2, position=position_dodge(0.9)) +
         facet_wrap(~phase, labeller =
                            labeller(phase = c("1" = "Phase 1","2" = "Phase 2"))) +
+        scale_fill_discrete(name = "", labels = c("Sledge-PA1", "Gingerbred man-PA2", "Bear-PA3")) +
         theme(
                 legend.position="top",
                 legend.title=element_blank(),
