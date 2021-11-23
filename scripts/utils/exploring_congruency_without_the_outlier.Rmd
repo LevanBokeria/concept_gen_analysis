@@ -4,7 +4,7 @@ output: bookdown::html_document2
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+# knitr::opts_chunk$set(echo = FALSE)
 ```
 
 ```{r load-all-libraries, message=FALSE, warning=FALSE, results=FALSE}
@@ -23,6 +23,8 @@ library(DT)
 library(kableExtra)
 library(assortedRFunctions)
 library(TOSTER)
+
+options(dplyr.summarise.inform = FALSE)
 
 # Source other scripts
 source('./utils/load_transform_gather.R')
@@ -52,17 +54,9 @@ rm(outList)
 ```
 
 
-# Calculate with/without outlier:
+# Create the dataframes with/without outlier:
 
-
-```{r define-flags}
-
-which_expt <- 1
-
-```
-
-
-```{r get-ses-1-2-with-and-without-the-outlier}
+```{r get-ses-1-2-with-and-without-the-outlier, message=FALSE, warning=FALSE, results='hide'}
 
 # Calculate the variables for the full data
 st_all_data <- 
@@ -76,7 +70,8 @@ st_all_data <-
                  ptp,
                  phase,
                  session) %>% 
-        summarise(mean = mean(correct, na.rm = TRUE))
+        summarise(mean = mean(correct, na.rm = TRUE)) %>%
+        ungroup()
         
         
         
@@ -94,7 +89,9 @@ st_no_outlier <-
                  ptp,
                  phase,
                  session) %>%
-        summarise(mean = mean(correct, na.rm = TRUE))
+        summarise(mean = mean(correct, na.rm = TRUE)) %>%
+        ungroup()
+
 
 # Calculate average for each toy separately
 st_by_target <- 
@@ -200,6 +197,14 @@ st_by_target_phase_diff_long <-
 
 ## Overall congruency
 
+Plot the data for congruent and incongruent groups, broken down by:
+
+- Whether its over all data or without the outlier
+- Whether its experiment 1 or 2.
+
+Conclusion:
+Not much learned from these plots. What is interesting is the arrangement-by-congruency interaction and if thats modulated by exclusion of the outlier. 
+
 ```{r congruency-plots, fig.height=6, fig.width=6}
 
 st_phase_diff_long %>%
@@ -223,6 +228,160 @@ st_phase_diff_long %>%
                    labeller = label_both)
 
 ```
+
+
+
+## By phase:
+
+Again, we just see what we already knew, with or without the outlier. 
+Phase1-2 stayes the same for the incongruent, but increases for the congruent group.
+
+```{r by-phase, fig.height=7, fig.width=9}
+
+st_phase_diff_long %>%
+        filter(phase_type != 'phase_2_min_phase_1') %>%
+        ggplot(aes(x=phase_type,y=ses_1_2_mean)) +
+        geom_violin() +
+        geom_boxplot(notch=TRUE,
+                     outlier.shape = NA,
+                     width=0.4) +
+        geom_point(alpha=0.2) +
+        geom_line(aes(group=ptp),
+                  alpha = 0.2,
+                  linetype = 'solid') +
+        stat_summary(fun=mean, 
+                     geom="point",
+                     shape=20, 
+                     size=5, 
+                     color="blue",
+                     fill="blue") +        
+        facet_grid(experiment~mean_type+congruency,
+                   labeller = label_both)
+
+
+```
+
+## Overall congruency by arrangements:
+
+For experiment 1:
+
+- We can see the congruency effect disappears for Arr2, when all data is considered. Again, this is because, Arr2-to-Arr1 experiences a boost in performance, due to Sledge-PA1 in Arr1 being very easy.
+- We can see the congruncy effect reappears for Arr2, when the outlier is removed. For this plot, when Congruency=1 the data hasn't changed, because then we're dealing with Arr2-to-Arr2, and Arr2 had no "outlier" target. Arr1 had the "outleir" Sledge-PA1. Thus, when Congruency=0, going from Arr2-to-Arr1, the Sledge-PA1 is removed from the Phase2-Arr1 data and the performance drops in Phase 2. Hence, Phase2-minus-Phase1 values drop too.
+
+For experiment 2:
+
+- We can see the congruency effect disappears for Arr3, when all data is considered. Presumably, this is because Arr3-to-Arr4 experiences a boost in performance due to Gingerbread man-PA2 in Arr4 being easy.
+- But, excluding the outlier PA does not bring back the congruency effect for Arr3.
+
+
+```{r by-arr-with-without-outlier, fig.width=10, fig.height=8}
+
+st_phase_diff_long %>%
+        filter(phase_type == 'phase_2_min_phase_1') %>%
+        ggplot(aes(x=congruency,y=ses_1_2_mean)) +
+        geom_violin() +
+        geom_boxplot(notch=TRUE,
+                     outlier.shape = NA,
+                     width=0.4) +
+        geom_jitter(width=0.2,
+                    alpha=0.2,
+                    height = 0) +
+        stat_summary(fun=mean, 
+                     geom="point",
+                     shape=20, 
+                     size=5, 
+                     color="blue",
+                     fill="blue") +  
+        geom_hline(yintercept = 0, linetype = 'dashed') +
+        facet_grid(mean_type~arr_phase_1_name) + 
+        ylab('Phase 2 min Phase 1') +
+        ggtitle('Columns are arrangements in phase 1')
+
+
+```
+
+## By phase and by arrangements:
+
+```{r by-arr-and-phase-with-without-outlier, fig.height=8, fig.width=14}
+
+st_phase_diff_long %>%
+        filter(phase_type != 'phase_2_min_phase_1') %>%
+        ggplot(aes(x=phase_type,y=ses_1_2_mean)) +
+        geom_violin() +
+        geom_boxplot(notch=TRUE,
+                     outlier.shape = NA,
+                     width=0.4) +
+        geom_point(alpha=0.2) +
+        geom_line(aes(group=ptp),
+                  alpha = 0.2,
+                  linetype = 'solid') +
+        stat_summary(fun=mean, 
+                     geom="point",
+                     shape=20, 
+                     size=5, 
+                     color="blue",
+                     fill="blue") +        
+        facet_grid(mean_type~arr_phase_1_name+congruency,
+                   labeller = label_both)
+
+
+```
+
+## Sanity check plots:
+
+Just plot all_data vs no_outlier for each phase of each group, confirming that the data doesn't change where there is no outlier so all_data==no_outlier, and it does change where the outlier was excluded
+
+```{r sanity-check-plots, fig.height=8, fig.width=14, warning=FALSE, results='hide', message=FALSE}
+
+
+st_phase_diff_long %>%
+        filter(phase_type != 'phase_2_min_phase_1') %>%
+        ggplot(aes(x=mean_type,y=ses_1_2_mean)) +
+        geom_violin() +
+        geom_boxplot(notch=TRUE,
+                     outlier.shape = NA,
+                     width=0.4) +
+        geom_point(alpha=0.2) +
+        geom_line(aes(group=ptp),
+                  alpha = 0.2,
+                  linetype = 'solid') +
+        # stat_summary(fun=mean, 
+        #              geom="point",
+        #              shape=20, 
+        #              size=5, 
+        #              color="blue",
+        #              fill="blue") +        
+        facet_grid(congruency~arr_phase_1_name+phase_type,
+                   labeller = label_both) +
+        theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+
+
+
+
+
+
+
+
+
+
+
+```
+
+
+# Bayes Factor calculations
+
+We can see that, for experiment 1, starting with Arr2:
+
+- bf_expt_1_arr_2_all_data = 0.39 
+- while excluding the outlier bf_expt_1_arr_2_no_outlier = 1.5.
+
+But we also see that for experiment 2, starting with Arr3:
+
+- bf_expt_2_arr_3_all_data = 0.26 
+- and is the same for bf_expt_2_arr_2_no_outlier = 0.26
+
+
 
 ```{r congruency-bf-expt1-all-data}
 
@@ -305,27 +464,6 @@ bf_expt_1_arr_2_all_data <-
     ),
     4)
 
-# Old way:
-# which_expt <- 1
-# ses_1_2_perf_congruent_1_arr_1_2 <-
-#     results_table_qc_pass_ptp_analyzed %>%
-#     filter(experiment == which_expt & congruency == 1) %>%
-#     select(phase_2_min_phase_1_ses_1_2_perf) %>% .[[1]]
-# 
-# ses_1_2_perf_congruent_0_arr_1_2 <-
-#     results_table_qc_pass_ptp_analyzed %>%
-#     filter(experiment == which_expt & congruency == 0) %>%
-#     select(phase_2_min_phase_1_ses_1_2_perf) %>% .[[1]]
-# 
-# bf_ses_1_2_perf_arr_1_2 <-
-#     reportBF(ttestBF(
-#         ses_1_2_perf_congruent_1_arr_1_2,
-#         ses_1_2_perf_congruent_0_arr_1_2,
-#         paired = FALSE
-#     ),
-#     4)
-
-
 ```
 
 
@@ -384,7 +522,7 @@ bf_expt_1_arr_1_no_outlier <-
     ),
     4)
 
-# Experiment 1: all data, arr 2
+# Experiment 1: no outlier, arr 2
 p2_p1_congruent_1_expt_1_arr_2_no_outlier <-
     st_phase_diff_long %>%
     filter(experiment == 1,
@@ -416,7 +554,7 @@ bf_expt_1_arr_2_no_outlier <-
 
 ```{r congruency-bf-expt2-all-data}
 
-# Experiment 1: all data
+# Experiment 2: all data
 p2_p1_congruent_1_expt_2_all_data <-
     st_phase_diff_long %>%
     filter(experiment == 2,
@@ -441,7 +579,7 @@ bf_expt_2_all_data <-
     ),
     4)
 
-# Experiment 1: all data, arr 3
+# Experiment 2: all data, arr 3
 p2_p1_congruent_1_expt_2_arr_3_all_data <-
     st_phase_diff_long %>%
     filter(experiment == 2,
@@ -495,32 +633,12 @@ bf_expt_2_arr_4_all_data <-
     ),
     4)
 
-# Old way:
-# which_expt <- 1
-# ses_1_2_perf_congruent_1_arr_1_2 <-
-#     results_table_qc_pass_ptp_analyzed %>%
-#     filter(experiment == which_expt & congruency == 1) %>%
-#     select(phase_2_min_phase_1_ses_1_2_perf) %>% .[[1]]
-# 
-# ses_1_2_perf_congruent_0_arr_1_2 <-
-#     results_table_qc_pass_ptp_analyzed %>%
-#     filter(experiment == which_expt & congruency == 0) %>%
-#     select(phase_2_min_phase_1_ses_1_2_perf) %>% .[[1]]
-# 
-# bf_ses_1_2_perf_arr_1_2 <-
-#     reportBF(ttestBF(
-#         ses_1_2_perf_congruent_1_arr_1_2,
-#         ses_1_2_perf_congruent_0_arr_1_2,
-#         paired = FALSE
-#     ),
-#     4)
-
-
 ```
 
 
 
 ```{r congruency-bf-expt2-no-outlier}
+
 # Experiment 2: no outlier
 p2_p1_congruent_1_expt_2_no_outlier <-
     st_phase_diff_long %>%
@@ -546,7 +664,7 @@ bf_expt_2_no_outlier <-
     ),
     4)
 
-# Experiment 1: all data, arr 3
+# Experiment 2: no outlier, arr 3
 p2_p1_congruent_1_expt_2_arr_3_no_outlier <-
     st_phase_diff_long %>%
     filter(experiment == 2,
@@ -573,7 +691,7 @@ bf_expt_2_arr_3_no_outlier <-
     ),
     4)
 
-# Experiment 2: all data, arr 4
+# Experiment 2: no outlier, arr 4
 p2_p1_congruent_1_expt_2_arr_4_no_outlier <-
     st_phase_diff_long %>%
     filter(experiment == 2,
@@ -602,84 +720,34 @@ bf_expt_2_arr_4_no_outlier <-
 
 ```
 
-## By phase:
+## List all the BFs
 
-```{r by-phase, fig.height=7, fig.width=9}
+### Experiment 1:
 
-st_phase_diff_long %>%
-        filter(phase_type != 'phase_2_min_phase_1') %>%
-        ggplot(aes(x=phase_type,y=ses_1_2_mean)) +
-        geom_violin() +
-        geom_boxplot(notch=TRUE,
-                     outlier.shape = NA,
-                     width=0.4) +
-        geom_point(alpha=0.2) +
-        geom_line(aes(group=ptp),
-                  alpha = 0.2,
-                  linetype = 'solid') +
-        stat_summary(fun=mean, 
-                     geom="point",
-                     shape=20, 
-                     size=5, 
-                     color="blue",
-                     fill="blue") +        
-        facet_grid(experiment~mean_type+congruency,
-                   labeller = label_both)
+bf_expt_1_all_data = `r bf_expt_1_all_data`
+
+bf_expt_1_no_outlier = `r bf_expt_1_no_outlier`
+
+bf_expt_1_arr_1_all_data = `r bf_expt_1_arr_1_all_data`
+
+bf_expt_1_arr_1_no_outlier = `r bf_expt_1_arr_1_no_outlier`
+
+bf_expt_1_arr_2_all_data = `r bf_expt_1_arr_2_all_data`
+
+bf_expt_1_arr_2_no_outlier = `r bf_expt_1_arr_2_no_outlier`
 
 
-```
+### Experiment 2:
 
-## Overall congruency by arrangements:
+bf_expt_2_all_data = `r bf_expt_2_all_data`
 
-```{r by-arr-with-without-outlier}
+bf_expt_2_no_outlier = `r bf_expt_2_no_outlier`
 
-st_phase_diff_long %>%
-        filter(phase_type == 'phase_2_min_phase_1') %>%
-        ggplot(aes(x=congruency,y=ses_1_2_mean)) +
-        geom_violin() +
-        geom_boxplot(notch=TRUE,
-                     outlier.shape = NA,
-                     width=0.4) +
-        geom_jitter(width=0.2,
-                    alpha=0.2,
-                    height = 0) +
-        stat_summary(fun=mean, 
-                     geom="point",
-                     shape=20, 
-                     size=5, 
-                     color="blue",
-                     fill="blue") +  
-        geom_hline(yintercept = 0, linetype = 'dashed') +
-        facet_grid(mean_type~arr_phase_1_name,
-                   labeller = label_both) + 
-        ylab('Phase 2 min Phase 1')
+bf_expt_2_arr_3_all_data = `r bf_expt_2_arr_3_all_data`
 
+bf_expt_2_arr_3_no_outlier = `r bf_expt_2_arr_3_no_outlier`
 
-```
+bf_expt_2_arr_4_all_data = `r bf_expt_2_arr_4_all_data`
 
-## By phase and by arrangements:
+bf_expt_2_arr_4_no_outlier = `r bf_expt_2_arr_4_no_outlier`
 
-```{r by-arr-and-phase-with-without-outlier, fig.height=8, fig.width=12}
-
-st_phase_diff_long %>%
-        filter(phase_type != 'phase_2_min_phase_1') %>%
-        ggplot(aes(x=phase_type,y=ses_1_2_mean)) +
-        geom_violin() +
-        geom_boxplot(notch=TRUE,
-                     outlier.shape = NA,
-                     width=0.4) +
-        geom_point(alpha=0.2) +
-        geom_line(aes(group=ptp),
-                  alpha = 0.2,
-                  linetype = 'solid') +
-        stat_summary(fun=mean, 
-                     geom="point",
-                     shape=20, 
-                     size=5, 
-                     color="blue",
-                     fill="blue") +        
-        facet_grid(mean_type~arr_phase_1_name+congruency,
-                   labeller = label_both)
-
-
-```
