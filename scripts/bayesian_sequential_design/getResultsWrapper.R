@@ -26,11 +26,11 @@ source('./utils/getStats.R')
 nIter   <- 10000
 d1      <- 0.5
 d1_str  <- '05'
-nLimit  <- 200
-crit1   <- 6
-crit2   <- 1/6
+nLimit  <- 432
+crit1   <- 10
+crit2   <- 1/10
 minN    <- 24
-batchSize <- 16
+batchSize <- 12
 
 
 readDF <- F # if DF was saved previously, just read it without recreating it

@@ -7,7 +7,7 @@
 # results into a readable format.
 
 # Setting seed
-set.seed(911225)
+set.seed(4)
 
 # Libraries
 library(rslurm)
@@ -22,13 +22,13 @@ nIter         <- 10000
 
 # Number of participants per group, because we're running 
 # between participant comparison.
-nLimit        <- 200 
+nLimit        <- 432 
 
 d0        <- 0.0
 d1        <- 0.5
-crit1     <- 6
-crit2     <- 1/6
-batchSize <- 16
+crit1     <- 10
+crit2     <- 1/10
+batchSize <- 12
 minN      <- 24
 
 # Name for saving folder

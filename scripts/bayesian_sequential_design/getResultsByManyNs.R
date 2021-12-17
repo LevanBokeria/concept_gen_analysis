@@ -17,15 +17,15 @@ library(tidyverse)
 nIterEv <- 10000 # maybe the original simulation ran 10,000, but we want less?
 d1      <- 0.5
 d1_str  <- '05'
-nLimit  <- 200
-crit1   <- 6
-crit2   <- 1/6
+nLimit  <- 432
+crit1   <- 10
+crit2   <- 1/10
 minN    <- 24
 
 # What are the various maxNs we want to analyze?
 nFrom <- 24 
-nTo   <- 200 
-nBy   <- 8
+nTo   <- 432
+nBy   <- 12
 altNs <- seq(nFrom,nTo,by = nBy)
 
 # Flags
