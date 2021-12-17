@@ -24,8 +24,10 @@ minN    <- 24
 
 # What are the various maxNs we want to analyze?
 nFrom <- 24 
+
 nTo   <- 432
 nBy   <- 12
+
 altNs <- seq(nFrom,nTo,by = nBy)
 
 # Flags
