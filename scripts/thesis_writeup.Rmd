@@ -23,6 +23,7 @@ library(DT)
 library(kableExtra)
 library(assortedRFunctions)
 library(TOSTER)
+library(metafor)
 
 # Source other scripts
 source('./utils/load_transform_gather.R')
@@ -156,6 +157,15 @@ pooled_sd <- sqrt(
 effect_size_arr_1_2 <- (mean(ses_1_2_perf_congruent_1_arr_1_2) - mean(ses_1_2_perf_congruent_0_arr_1_2)) /
     pooled_sd
 
+# rstatix effect size
+results_table_qc_pass_ptp_analyzed %>%
+        filter(experiment == which_expt) %>%
+        select(ptp,congruency,phase_2_min_phase_1_ses_1_2_perf) %>% 
+        cohens_d(phase_2_min_phase_1_ses_1_2_perf ~ congruency, 
+                 var.equal = FALSE,
+                 paired = FALSE, hedges.correction = TRUE)
+
+
 ```
 
 
@@ -202,12 +212,36 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
                                                          "1" = "Congruent")))
 
 # Basic summary table
-results_table_qc_pass_ptp_analyzed_gathered %>%
+tbl <- results_table_qc_pass_ptp_analyzed %>%
         filter(experiment == which_expt) %>%
-        group_by(congruency,phase) %>%
-        get_summary_stats(ses_1_2_perf, type = 'mean_sd') %>%
+        group_by(congruency) %>% 
+        summarise(n = n(),
+                  mean = mean(phase_2_min_phase_1_ses_1_2_perf),
+                  sd = sd(phase_2_min_phase_1_ses_1_2_perf)) 
+
+tbl %>%
         knitr::kable() %>%
         kable_styling(bootstrap_options = "striped")
+
+# Another way to get paired effect size
+results_table_qc_pass_ptp_analyzed_gathered %>%
+        filter(experiment == which_expt,
+               congruency == 1) %>%
+        select(ptp,phase,ses_1_2_perf) %>% 
+        cohens_d(ses_1_2_perf ~ phase, 
+                 paired = TRUE, 
+                 var.equal = FALSE,
+                 hedges.correction = TRUE)
+
+results_table_qc_pass_ptp_analyzed_gathered %>%
+        filter(experiment == which_expt,
+               congruency == 0) %>%
+        select(ptp,phase,ses_1_2_perf) %>% 
+        cohens_d(ses_1_2_perf ~ phase, 
+                 paired = TRUE, 
+                 var.equal = FALSE,
+                 hedges.correction = TRUE)
+
 ```
 
 
@@ -293,8 +327,81 @@ BF_arr_2_first <- ttestBF(
     paired = FALSE
 ) %>% reportBF(4)
 
+# Effect size
+hedges_g_arr_1_congruency <- escalc('SMDH',
+       n1i  = length(data_arr_1_c1),
+       m1i  = mean(data_arr_1_c1),
+       sd1i = sd(data_arr_1_c1),
+       n2i  = length(data_arr_1_c0),
+       m2i  = mean(data_arr_1_c0),
+       sd2i = sd(data_arr_1_c0))
+
+hedges_g_arr_2_congruency <- escalc('SMDH',
+       n1i  = length(data_arr_2_c1),
+       m1i  = mean(data_arr_2_c1),
+       sd1i = sd(data_arr_2_c1),
+       n2i  = length(data_arr_2_c0),
+       m2i  = mean(data_arr_2_c0),
+       sd2i = sd(data_arr_2_c0))
+
+# rstatix calculation
+results_table_qc_pass_ptp_analyzed %>%
+        filter(experiment == which_expt, 
+               arr_phase_1_name == 1) %>%
+        select(ptp,congruency,phase_2_min_phase_1_ses_1_2_perf) %>% 
+        cohens_d(phase_2_min_phase_1_ses_1_2_perf ~ congruency, 
+                 paired = FALSE, 
+                 var.equal = FALSE,
+                 hedges.correction = TRUE)
+
+results_table_qc_pass_ptp_analyzed %>%
+        filter(experiment == which_expt, 
+               arr_phase_1_name == 2) %>%
+        select(ptp,congruency,phase_2_min_phase_1_ses_1_2_perf) %>% 
+        cohens_d(phase_2_min_phase_1_ses_1_2_perf ~ congruency, 
+                 paired = FALSE, 
+                 var.equal = FALSE,
+                 hedges.correction = TRUE)
+
+# Effect size for the concept order
+tbl <- results_table_qc_pass_ptp_analyzed %>%
+        filter(experiment == which_expt) %>%
+        group_by(arr_phase_1_name,concept_phase_1) %>%
+        summarise(n = n(),
+                  mean = mean(phase_2_min_phase_1_ses_1_2_perf),
+                  sd   = sd(phase_2_min_phase_1_ses_1_2_perf))
+
+hedges_g_arr_1_concept_order <- escalc('SMDH',
+       n1i  = filter(tbl,arr_phase_1_name == 1, concept_phase_1 == 'beak_tail_space')$n,
+       m1i  = filter(tbl,arr_phase_1_name == 1, concept_phase_1 == 'beak_tail_space')$mean,
+       sd1i = filter(tbl,arr_phase_1_name == 1, concept_phase_1 == 'beak_tail_space')$sd,
+       n2i  = filter(tbl,arr_phase_1_name == 1, concept_phase_1 == 'neck_legs_space')$n,
+       m2i  = filter(tbl,arr_phase_1_name == 1, concept_phase_1 == 'neck_legs_space')$mean,
+       sd2i = filter(tbl,arr_phase_1_name == 1, concept_phase_1 == 'neck_legs_space')$sd)
+
+# rstatix effect size
+results_table_qc_pass_ptp_analyzed %>%
+        filter(experiment == which_expt, 
+               arr_phase_1_name == 1) %>%
+        select(ptp,concept_phase_1,phase_2_min_phase_1_ses_1_2_perf) %>% 
+        cohens_d(phase_2_min_phase_1_ses_1_2_perf ~ concept_phase_1, 
+                 paired = FALSE, 
+                 var.equal = FALSE,
+                 hedges.correction = TRUE)
+
+results_table_qc_pass_ptp_analyzed %>%
+        filter(experiment == which_expt, 
+               arr_phase_1_name == 2) %>%
+        select(ptp,concept_phase_1,phase_2_min_phase_1_ses_1_2_perf) %>% 
+        cohens_d(phase_2_min_phase_1_ses_1_2_perf ~ concept_phase_1, 
+                 paired = FALSE, 
+                 var.equal = FALSE,
+                 hedges.correction = TRUE)
+
+
 
 ```
+
 ## The basic congruency effect, broken in phases, arrangement order
 
 ```{r congruency-effect-expt-1-by-phases-by-arrangements, fig.width=6, fig.height=4}
@@ -345,6 +452,51 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
         get_summary_stats(ses_1_2_perf, type = 'mean_sd') %>%
         knitr::kable() %>%
         kable_styling(bootstrap_options = "striped")
+
+# rstatix effect sizes
+results_table_qc_pass_ptp_analyzed_gathered %>%
+        filter(experiment == which_expt, 
+               arr_phase_1_name == 1,
+               congruency == 1) %>%
+        select(ptp,congruency,arr_phase_1_name,phase,ses_1_2_perf) %>% 
+        cohens_d(ses_1_2_perf ~ phase, 
+                 paired = TRUE, 
+                 var.equal = FALSE,
+                 hedges.correction = TRUE)
+
+results_table_qc_pass_ptp_analyzed_gathered %>%
+        filter(experiment == which_expt, 
+               arr_phase_1_name == 2,
+               congruency == 1) %>%
+        select(ptp,congruency,arr_phase_1_name,phase,ses_1_2_perf) %>% 
+        cohens_d(ses_1_2_perf ~ phase, 
+                 paired = TRUE, 
+                 var.equal = FALSE,
+                 hedges.correction = TRUE)
+
+# Arr1 to arr2 incongruency cost
+results_table_qc_pass_ptp_analyzed_gathered %>%
+        filter(experiment == which_expt, 
+               arr_phase_1_name == 1,
+               congruency == 0) %>%
+        select(ptp,congruency,arr_phase_1_name,phase,ses_1_2_perf) %>% 
+        cohens_d(ses_1_2_perf ~ phase, 
+                 paired = TRUE, 
+                 var.equal = FALSE,
+                 hedges.correction = TRUE)
+
+# Arr2 to Arr1 incongruency unexpected boost
+results_table_qc_pass_ptp_analyzed_gathered %>%
+        filter(experiment == which_expt, 
+               arr_phase_1_name == 2,
+               congruency == 0) %>%
+        select(ptp,congruency,arr_phase_1_name,phase,ses_1_2_perf) %>% 
+        cohens_d(ses_1_2_perf ~ phase, 
+                 paired = TRUE, 
+                 var.equal = FALSE,
+                 hedges.correction = TRUE)
+
+
 ```
 
 
@@ -536,6 +688,9 @@ bayes_aov_vs_full %>% knitr::kable(caption = 'Against the full model') %>%
         kable_styling(bootstrap_options = "striped")
 
 bayes_aov_sorted[1]
+
+# How much more likely is this top winning model against a model NOT including the interaction term?
+bayes_aov_sorted[1]/bayes_aov_sorted[26]
 
 # # Print the BF of the full model, with all main effects, all 2-way and 3-way interactions
 # bayes_aov[127]
@@ -750,6 +905,15 @@ pooled_sd <- sqrt(
 effect_size_arr_1_2 <- (mean(ses_1_2_perf_congruent_1_arr_1_2) - mean(ses_1_2_perf_congruent_0_arr_1_2)) /
     pooled_sd
 
+
+# rstatix effect size
+results_table_qc_pass_ptp_analyzed %>%
+        filter(experiment == which_expt) %>%
+        select(ptp,congruency,phase_2_min_phase_1_ses_1_2_perf) %>% 
+        cohens_d(phase_2_min_phase_1_ses_1_2_perf ~ congruency, 
+                 var.equal = FALSE,
+                 paired = FALSE, 
+                 hedges.correction = TRUE)
 ```
 
 
@@ -820,6 +984,25 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
         get_summary_stats(ses_1_2_perf, type = 'mean_sd') %>%
         knitr::kable() %>%
         kable_styling(bootstrap_options = "striped")
+
+# Another way to get paired effect size
+results_table_qc_pass_ptp_analyzed_gathered %>%
+        filter(experiment == which_expt,
+               congruency == 1) %>%
+        select(ptp,phase,ses_1_2_perf) %>% 
+        cohens_d(ses_1_2_perf ~ phase, 
+                 paired = TRUE, 
+                 var.equal = FALSE,
+                 hedges.correction = TRUE)
+
+results_table_qc_pass_ptp_analyzed_gathered %>%
+        filter(experiment == which_expt,
+               congruency == 0) %>%
+        select(ptp,phase,ses_1_2_perf) %>% 
+        cohens_d(ses_1_2_perf ~ phase, 
+                 paired = TRUE, 
+                 var.equal = FALSE,
+                 hedges.correction = TRUE)
 ```
 
 
@@ -927,6 +1110,34 @@ BF_arr_4_first <- ttestBF(
     paired = FALSE
 ) %>% reportBF(4)
 
+# rstatix calculation
+results_table_qc_pass_ptp_analyzed %>%
+        filter(experiment == which_expt, 
+               arr_phase_1_name == 3) %>%
+        select(ptp,congruency,phase_2_min_phase_1_ses_1_2_perf) %>% 
+        cohens_d(phase_2_min_phase_1_ses_1_2_perf ~ congruency, 
+                 paired = FALSE, 
+                 var.equal = FALSE,
+                 hedges.correction = TRUE)
+
+results_table_qc_pass_ptp_analyzed %>%
+        filter(experiment == which_expt, 
+               arr_phase_1_name == 4) %>%
+        select(ptp,congruency,phase_2_min_phase_1_ses_1_2_perf) %>% 
+        cohens_d(phase_2_min_phase_1_ses_1_2_perf ~ congruency, 
+                 paired = FALSE, 
+                 var.equal = FALSE,
+                 hedges.correction = TRUE)
+
+# Concept order
+results_table_qc_pass_ptp_analyzed %>%
+        filter(experiment == which_expt, 
+               arr_phase_1_name == 4) %>%
+        select(ptp,concept_phase_1,phase_2_min_phase_1_ses_1_2_perf) %>% 
+        cohens_d(phase_2_min_phase_1_ses_1_2_perf ~ concept_phase_1, 
+                 paired = FALSE, 
+                 var.equal = FALSE,
+                 hedges.correction = TRUE)
 
 ```
 
@@ -1000,6 +1211,49 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
         get_summary_stats(ses_1_2_perf, type = 'mean_sd') %>%
         knitr::kable() %>%
         kable_styling(bootstrap_options = "striped")
+
+# rstatix effect sizes
+results_table_qc_pass_ptp_analyzed_gathered %>%
+        filter(experiment == which_expt, 
+               arr_phase_1_name == 3,
+               congruency == 1) %>%
+        select(ptp,congruency,arr_phase_1_name,phase,ses_1_2_perf) %>% 
+        cohens_d(ses_1_2_perf ~ phase, 
+                 paired = TRUE, 
+                 var.equal = FALSE,
+                 hedges.correction = TRUE)
+
+results_table_qc_pass_ptp_analyzed_gathered %>%
+        filter(experiment == which_expt, 
+               arr_phase_1_name == 4,
+               congruency == 1) %>%
+        select(ptp,congruency,arr_phase_1_name,phase,ses_1_2_perf) %>% 
+        cohens_d(ses_1_2_perf ~ phase, 
+                 paired = TRUE, 
+                 var.equal = FALSE,
+                 hedges.correction = TRUE)
+
+# Arr1 to arr2 incongruency cost
+results_table_qc_pass_ptp_analyzed_gathered %>%
+        filter(experiment == which_expt, 
+               arr_phase_1_name == 3,
+               congruency == 0) %>%
+        select(ptp,congruency,arr_phase_1_name,phase,ses_1_2_perf) %>% 
+        cohens_d(ses_1_2_perf ~ phase, 
+                 paired = TRUE, 
+                 var.equal = FALSE,
+                 hedges.correction = TRUE)
+
+# Arr2 to Arr1 incongruency unexpected boost
+results_table_qc_pass_ptp_analyzed_gathered %>%
+        filter(experiment == which_expt, 
+               arr_phase_1_name == 4,
+               congruency == 0) %>%
+        select(ptp,congruency,arr_phase_1_name,phase,ses_1_2_perf) %>% 
+        cohens_d(ses_1_2_perf ~ phase, 
+                 paired = TRUE, 
+                 var.equal = FALSE,
+                 hedges.correction = TRUE)
 ```
 
 
