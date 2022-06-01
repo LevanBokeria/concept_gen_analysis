@@ -1,5 +1,5 @@
 function [long_form_data_all_ptp,results_table_all_ptp] = ...
-    recalc_rt_qc_pass_func(saveCombinedData)
+    recalc_rt_qc_pass_func(saveCombinedData);
 
 % Description:
 

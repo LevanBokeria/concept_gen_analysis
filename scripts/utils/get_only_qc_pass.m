@@ -1,8 +1,9 @@
 function data_out = get_only_qc_pass(data_in)
 
 fprintf('THIS SCRIPT IS OUTTATED');
+dbstop if error;
 
-input('outtadet script')
+% input('outtadet script')
 
 %% Description
 
@@ -33,6 +34,11 @@ if (nargin < 1)
     
 end
 
+%% Do the basic data checks first
+
+[data_in,results_table] = ...
+    basic_data_checks();
+
 %% Clean the data
 
 % Get the ones that had global pass == 1, OR if failed at phase 2 because
@@ -42,12 +48,15 @@ idx_phase_2_perf_fail = strcmp(data_in.progress_state,'qc_failed_phase_2') & ...
     (data_in.min_perf_pass == 0 | data_in.max_training_sess_pass == 0);
 idx_global_pass_or_phase_2_perf_fail = idx_global_pass | idx_phase_2_perf_fail;
 
-idx_qc_pass_up_to_now = idx_global_pass_or_phase_2_perf_fail & ...
+idx_qc_pass_up_to_now = ...
+    data_in.data_submitted == 1 & ...
+    idx_global_pass_or_phase_2_perf_fail & ...
     data_in.debrief_qc_pass == 1 & ...
     data_in.fb_int_qc_pass == 1 & ...
-    data_in.data_submitted == 1 & ...
-    data_in.phase_1_rt_qc_pass == 1 & ...
-    data_in.phase_2_rt_qc_pass == 1;
+    data_in.basic_data_checks_pass == 1;
+
+%     data_in.phase_1_rt_qc_pass == 1 & ...
+%     data_in.phase_2_rt_qc_pass == 1 & ...
 
 data_out = data_in(idx_qc_pass_up_to_now,:);
 
