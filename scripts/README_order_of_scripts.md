@@ -4,7 +4,7 @@
 
 2. Go through the wave debriefing, score whether each participant pass/failed the QC based on debriefing feedback.
 
-3. Run the debrief_and_int_feedback_analysis_updating.m script, to take the variables from excel about pass/fail in defriefs, and add them to the wave_febriefing files themselves.
+3. Run the debrief_and_int_feedback_analysis_updating.m script, to take the variables from excel about pass/fail in debriefs, and add them to the wave_debriefing files themselves.
 
 4. Run the wrapper_add_recalc_how_many.m script. This will add the wave data to the combined data of all the participants, then it will recalculate outliers based on RT, then it will tell you how many more participants you need to complete data acquisition for a given batch of the wave. You use this to open appropriate number of slots in prolific.
 

@@ -28,7 +28,7 @@ rm(outList)
 
 
 results_table_qc_pass_ptp_analyzed %>%
-        filter(experiment == 2) %>%
+        filter(experiment == 1) %>%
         group_by(congruency,
                  arr_phase_1_name,
                  concept_phase_1) %>%
