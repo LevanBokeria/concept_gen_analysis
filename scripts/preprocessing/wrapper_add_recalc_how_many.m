@@ -15,7 +15,7 @@ function wrapper_add_recalc_how_many(batch_number,wave_name,...
 if (nargin < 1)
     batch_number    = 'batch_3';
     wave_name       = 'wave_17_ds';
-    overwriteData    = 0;
+    overwriteData    = 1;
     saveCombinedData = 1;
 end
 
