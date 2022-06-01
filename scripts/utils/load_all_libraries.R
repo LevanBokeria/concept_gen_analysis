@@ -23,4 +23,9 @@ pacman::p_load(pacman,
                pdist,
                moments,
                LambertW,
-               tidyverse)
+               tidyverse,
+               TOSTER,
+               assortedRFunctions,
+               emmeans,
+               ggpubr,
+               readxl)

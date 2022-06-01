@@ -13,16 +13,7 @@ output: bookdown::html_document2
 rm(list=ls())
 
 # Load libraries
-library(tidyverse)
-library(readxl)
-library(ggpubr)
-library(rstatix)
-library(emmeans)
-library(BayesFactor)
-library(DT)
-library(kableExtra)
-library(assortedRFunctions)
-library(TOSTER)
+source('./utils/load_all_libraries.R')
 
 options(dplyr.summarise.inform = FALSE)
 
@@ -192,6 +183,21 @@ st_by_target_phase_diff_long <-
 
 
 ```
+
+# Effect size, with and without an outlier
+
+```{r effect-size-with-without}
+
+st_phase_diff_long %>%
+        filter(phase_type == 'phase_2_min_phase_1',
+               experiment == 1) %>% 
+        group_by(mean_type) %>%
+        cohens_d(ses_1_2_mean ~ congruency, 
+                 var.equal = FALSE,
+                 paired = FALSE, hedges.correction = TRUE)
+
+```
+
 
 # Plots:
 
