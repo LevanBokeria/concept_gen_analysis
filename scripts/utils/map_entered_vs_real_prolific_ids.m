@@ -144,8 +144,12 @@ entered_real_prolific_ids = addvars(entered_real_prolific_ids,...
 
 entered_real_prolific_ids.other_file_row_idx = [];
 
-entered_real_prolific_ids = renamevars(entered_real_prolific_ids,...
-    'ptp','entered_prolific_id');
+entered_real_prolific_ids.Properties.VariableNames = ...
+    {'entered_prolific_id','real_prolific_id'};
+
+% For Matlab 2020+
+% entered_real_prolific_ids = renamevars(entered_real_prolific_ids,...
+%     'ptp','entered_prolific_id');
 
 %% Save this file
 if ~exist(fullfile(home,'results','analysis','other'))

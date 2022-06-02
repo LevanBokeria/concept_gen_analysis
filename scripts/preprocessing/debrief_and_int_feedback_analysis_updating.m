@@ -22,7 +22,7 @@ end
 
 %% Read the files
 batch_number    = 'batch_3';
-wave_name       = 'wave_17_ds';
+wave_name       = 'wave_18_ds';
 batch_wave_name = [batch_number '_' wave_name];
 
 load(fullfile(home,'results','analysis','waveData',...
