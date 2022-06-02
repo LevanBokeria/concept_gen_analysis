@@ -26,7 +26,7 @@ warning('off','MATLAB:table:RowsAddedExistingVars')
 
 % Name of the file containing participant data from JATOS
 batch_number    = 'batch_3';
-wave_name       = 'wave_18_ds';
+wave_name       = 'wave_19_ds';
 batch_wave_name = [batch_number '_' wave_name];
 
 % Flags
