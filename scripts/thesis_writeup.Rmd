@@ -690,7 +690,7 @@ bayes_aov_vs_full %>% knitr::kable(caption = 'Against the full model') %>%
 bayes_aov_sorted[1]
 
 # How much more likely is this top winning model against a model NOT including the interaction term?
-bayes_aov_sorted[1]/bayes_aov_sorted[26]
+bayes_aov_sorted[1]/bayes_aov_sorted[29]
 
 # # Print the BF of the full model, with all main effects, all 2-way and 3-way interactions
 # bayes_aov[127]
