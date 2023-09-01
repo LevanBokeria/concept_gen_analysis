@@ -70,12 +70,13 @@ which_expt <- 1
 
 stat_color <- 'blue'
 
-results_table_qc_pass_ptp_analyzed %>%
+p <- results_table_qc_pass_ptp_analyzed %>%
         filter(experiment == which_expt) %>%
         ggplot(aes(x=congruency,
                    y=phase_2_min_phase_1_ses_1_2_perf,
                    fill=congruency)) + 
-        geom_violin(alpha=0.5) +
+        geom_violin(alpha=0.5,
+                    width = 0.8) +
         geom_boxplot(width=0.3,
                      notch = TRUE,
                      outlier.shape = NA,
@@ -83,12 +84,15 @@ results_table_qc_pass_ptp_analyzed %>%
         # geom_point(pch=21,
         #            position = position_jitterdodge(dodge.width=0.5,
         #                                            jitter.width=0.1)) +
-        geom_dotplot(binaxis='y', 
-                     stackdir='center',
-                     stackratio=1,
-                     dotsize=0.7, 
-                     fill="black",
-                     alpha=0.2) +
+        # geom_dotplot(binaxis='y', 
+        #              stackdir='center',
+        #              stackratio=1,
+        #              dotsize=0.7, 
+        #              fill="black",
+        #              alpha=0.2) +
+        geom_jitter(hight = 0,
+                    width = 0.2,
+                    alpha = 0.2) +
         stat_summary(fun=mean, 
                      geom="point",
                      shape=20,
@@ -107,6 +111,10 @@ results_table_qc_pass_ptp_analyzed %>%
         scale_fill_manual(values=c('#e5f5f9','#2ca25f')) + 
         theme(legend.position="none",
               axis.title.x=element_blank())
+print(p)
+
+ggsave(filename = 'expt_1_congruency.png', plot = p, path = '../results/plots/', width = 3, height = 4, device='png', dpi=300)
+
 
 # Basic summary table
 results_table_qc_pass_ptp_analyzed %>%
@@ -118,7 +126,7 @@ results_table_qc_pass_ptp_analyzed %>%
 
 # Bayes factor analysis:
 
-# Analyze session differences
+# Analyze block differences
 ses_1_2_perf_congruent_1_arr_1_2 <-
     results_table_qc_pass_ptp_analyzed %>%
     filter(experiment == which_expt & congruency == 1) %>%
@@ -140,7 +148,7 @@ bf_ses_1_2_perf_arr_1_2 <-
 # Basic t-test
 t.test(ses_1_2_perf_congruent_0_arr_1_2,ses_1_2_perf_congruent_1_arr_1_2,paired=FALSE)
 
-# Effect size for the session differences
+# Effect size for the block differences
 sd_c1 <- sd(ses_1_2_perf_congruent_1_arr_1_2)
 sd_c0 <- sd(ses_1_2_perf_congruent_0_arr_1_2)
 
@@ -175,7 +183,7 @@ results_table_qc_pass_ptp_analyzed %>%
 ## The basic congruency effect, broken in phases
 
 ```{r congruency-effect-expt-1-by-phases, fig.width=5, fig.height=4}
-results_table_qc_pass_ptp_analyzed_gathered %>% 
+p<-results_table_qc_pass_ptp_analyzed_gathered %>% 
         filter(experiment == which_expt) %>%
         ggplot(aes(x=phase,
                    y=ses_1_2_perf,
@@ -199,7 +207,7 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
                      color=stat_color,
                      fill=stat_color,
                      aes(color='mean')) +        
-        ylab("% correct in sessions 1&2") + 
+        ylab("% correct in blocks 1&2") + 
         theme(axis.text.x = element_text(size=10),
               axis.text.y = element_text(size=10),
               axis.title.x=element_blank(),
@@ -210,6 +218,8 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
         facet_wrap(~congruency, 
                    labeller = labeller(congruency = c("0" = "Incongruent",
                                                          "1" = "Congruent")))
+print(p)
+ggsave(filename = 'expt_1_congruency_by_phase.png', plot = p, path = '../results/plots/', width = 5, height = 4, device='png', dpi=300)
 
 # Basic summary table
 tbl <- results_table_qc_pass_ptp_analyzed %>%
@@ -249,7 +259,7 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
 
 ```{r congruency-effect-expt-1-by-arrangements, fig.width=4, fig.height=4}
 
-results_table_qc_pass_ptp_analyzed %>%
+p <- results_table_qc_pass_ptp_analyzed %>%
         filter(experiment == which_expt) %>%
         ggplot(aes(x=congruency,
                    y=phase_2_min_phase_1_ses_1_2_perf,
@@ -262,12 +272,15 @@ results_table_qc_pass_ptp_analyzed %>%
         # geom_point(pch=21,
         #            position = position_jitterdodge(dodge.width=0.5,
         #                                            jitter.width=0.1)) +
-        geom_dotplot(binaxis='y', 
-                     stackdir='center',
-                     stackratio=1,
-                     dotsize=0.7, 
-                     fill="black",
-                     alpha=0.2) +
+        # geom_dotplot(binaxis='y', 
+        #              stackdir='center',
+        #              stackratio=1,
+        #              dotsize=0.7, 
+        #              fill="black",
+        #              alpha=0.2) +
+        geom_jitter(width = 0.1,
+                    height = 0,
+                    alpha = 0.2) +
         stat_summary(fun=mean, 
                      geom="point",
                      shape=20,
@@ -290,7 +303,9 @@ results_table_qc_pass_ptp_analyzed %>%
                    labeller = labeller(arr_phase_1_name = c("1" = "Start with Arr1",
                                                          "2" = "Start with Arr2")))
 
+print(p)
 
+ggsave(filename = 'expt_1_congruency_by_arr.png', plot = p, path = '../results/plots/', width = 5, height = 4, device='png', dpi=300)
 
 # Basic summary table
 results_table_qc_pass_ptp_analyzed %>%
@@ -406,20 +421,20 @@ results_table_qc_pass_ptp_analyzed %>%
 
 ```{r congruency-effect-expt-1-by-phases-by-arrangements, fig.width=6, fig.height=4}
 
-results_table_qc_pass_ptp_analyzed_gathered %>% 
+p <- results_table_qc_pass_ptp_analyzed_gathered %>% 
         filter(experiment == which_expt) %>%
         ggplot(aes(x=phase,
                    y=ses_1_2_perf,
                    fill=phase)) +
-        geom_violin(alpha=0.5) +
+        geom_violin(alpha=0.3) +
         geom_boxplot(width=0.3,
                      notch=F,
                      outlier.shape = NA,
                      alpha=0.2) +
         geom_point(pch=21,
-                   alpha=0.3) +
+                   alpha=0.1) +
         geom_line(aes(group=ptp),
-                  alpha=0.2) +
+                  alpha=0.1) +
         # geom_point(pch=21,
         #            position = position_jitterdodge(dodge.width=0.5,
         #                                            jitter.width=0.05)) +
@@ -430,7 +445,7 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
                      color=stat_color,
                      fill=stat_color,
                      aes(color='mean')) +   
-        ylab("% correct in sessions 1&2") + 
+        ylab("% correct in blocks 1&2") + 
         scale_x_discrete(labels=c('Phase 1','Phase 2')) +
         scale_fill_manual(values=c('#045a8d','#d0d1e6')) +         
         theme(axis.text.x = element_text(size=10),
@@ -444,6 +459,9 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
                                                       '1'='Congruent')),
                    nrow = 1)
 
+print(p)
+
+ggsave(filename = 'expt_1_congruency_by_phase_by_arr.png', plot = p, path = '../results/plots/', width = 6, height = 4, device='png', dpi=300)
 
 
 # Basic summary table
@@ -504,10 +522,10 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
 
 ```{r individual-targets-incongruent-expt-1, fig.width=14, fig.height=4}
 
-# Filter to have only sessions 1-2, only incongruent, phase, arrangement, and 
+# Filter to have only blocks 1-2, only incongruent, phase, arrangement, and 
 # the target that was the prompt for the trial
 
-long_form_data_qc_pass_ptp_analyzed %>%
+p <- long_form_data_qc_pass_ptp_analyzed %>%
         filter(experiment == which_expt,
                (session %in% c(1,2))) %>%
         select(congruency,
@@ -531,16 +549,16 @@ long_form_data_qc_pass_ptp_analyzed %>%
         ggplot(aes(x=prompt_img_name,
                    fill=prompt_img_name, 
                    y=avg_correct)) +
-        geom_violin(alpha=0.4) +
+        geom_violin(alpha=0.2) +
         geom_boxplot(width=0.1,
                      alpha=0.2,
                      position=position_dodge(width = 0.9),
                      outlier.shape = NA) +
         geom_line(aes(group=ptp),
-                  alpha=0.2) +
+                  alpha=0.1) +
         geom_point(pch=21,
-                   alpha=0.3) +
-        stat_summary(fun=mean, geom="point", shape=19, size=2, 
+                   alpha=0.1) +
+        stat_summary(fun=mean, geom="point", shape=19, size=3, 
                      position=position_dodge(0.9)) +
         # stat_summary(fun=median, geom="point", shape=6, size=2, position=position_dodge(0.9)) +
         facet_wrap(~congruency+arr_phase_1_name+phase, labeller =
@@ -554,13 +572,20 @@ long_form_data_qc_pass_ptp_analyzed %>%
                 legend.position="",
                 legend.title=element_blank(),
                 plot.title = element_text(size=11),
-                axis.text.x = element_text(size=7),
+                axis.text.x = element_text(size=10,
+                                           angle = 90,
+                                           vjust = 0.5,
+                                           hjust = 1),
                 axis.text.y = element_text(size=11)
                 ) +        
         # scale_fill_discrete(name = "", labels = c("sledge-PA1", "gingerbred man-PA2", "bear-PA3")) +
         # scale_x_discrete(labels=c('Arr1','Arr2')) +
-        ylab('% Correct in Sessions 1&2') + 
+        ylab('% Correct in blocks 1&2') + 
         xlab('')
+
+print(p)
+
+ggsave(filename = 'expt_1_performance_by_toy.png', plot = p, path = '../results/plots/', width = 12, height = 5, device='png', dpi=300)
 
 ```
 
@@ -818,7 +843,7 @@ which_expt <- 2
 
 stat_color <- 'blue'
 
-results_table_qc_pass_ptp_analyzed %>%
+p <- results_table_qc_pass_ptp_analyzed %>%
         filter(experiment == which_expt) %>%
         ggplot(aes(x=congruency,
                    y=phase_2_min_phase_1_ses_1_2_perf,
@@ -828,15 +853,15 @@ results_table_qc_pass_ptp_analyzed %>%
                      notch = TRUE,
                      outlier.shape = NA,
                      alpha=0.2) + 
-        # geom_point(pch=21,
-        #            position = position_jitterdodge(dodge.width=0.5,
-        #                                            jitter.width=0.1)) +
-        geom_dotplot(binaxis='y', 
-                     stackdir='center',
-                     stackratio=1,
-                     dotsize=0.7, 
-                     fill="black",
-                     alpha=0.2) +
+        # geom_dotplot(binaxis='y', 
+        #              stackdir='center',
+        #              stackratio=1,
+        #              dotsize=0.7, 
+        #              fill="black",
+        #              alpha=0.2) +
+        geom_jitter(hight = 0,
+                    width = 0.2,
+                    alpha = 0.2) +        
         stat_summary(fun=mean, 
                      geom="point",
                      shape=20,
@@ -856,6 +881,10 @@ results_table_qc_pass_ptp_analyzed %>%
         theme(legend.position="none",
               axis.title.x=element_blank())
 
+print(p)
+
+ggsave(filename = 'expt_2_congruency.png', plot = p, path = '../results/plots/', width = 3, height = 4, device='png', dpi=300)
+
 # Basic summary table
 results_table_qc_pass_ptp_analyzed %>%
         filter(experiment == which_expt) %>%
@@ -866,7 +895,7 @@ results_table_qc_pass_ptp_analyzed %>%
 
 # Bayes factor analysis:
 
-# Analyze session differences
+# Analyze block differences
 ses_1_2_perf_congruent_1_arr_1_2 <-
     results_table_qc_pass_ptp_analyzed %>%
     filter(experiment == which_expt & congruency == 1) %>%
@@ -888,7 +917,7 @@ bf_ses_1_2_perf_arr_1_2 <-
 # Basic t-test
 t.test(ses_1_2_perf_congruent_0_arr_1_2,ses_1_2_perf_congruent_1_arr_1_2,paired=FALSE)
 
-# Effect size for the session differences
+# Effect size for the block differences
 sd_c1 <- sd(ses_1_2_perf_congruent_1_arr_1_2)
 sd_c0 <- sd(ses_1_2_perf_congruent_0_arr_1_2)
 
@@ -924,7 +953,7 @@ results_table_qc_pass_ptp_analyzed %>%
 
 ```{r congruency-effect-expt-2-by-phases, fig.width=5, fig.height=4}
 
-results_table_qc_pass_ptp_analyzed_gathered %>% 
+p <- results_table_qc_pass_ptp_analyzed_gathered %>% 
         filter(experiment == which_expt) %>%
         ggplot(aes(x=phase,
                    y=ses_1_2_perf,
@@ -935,7 +964,7 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
                      outlier.shape = NA,
                      alpha=0.2) +
         geom_point(pch=21,
-                   alpha=0.3) +
+                   alpha=0.2) +
         geom_line(aes(group=ptp),
                   alpha=0.2) +
         stat_summary(fun=mean, 
@@ -945,7 +974,7 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
                      color=stat_color,
                      fill=stat_color,
                      aes(color='mean')) +        
-        ylab("% correct in sessions 1&2") + 
+        ylab("% correct in blocks 1&2") + 
         theme(axis.text.x = element_text(size=10),
               axis.text.y = element_text(size=10),
               axis.title.x=element_blank(),
@@ -957,6 +986,8 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
                    labeller = labeller(congruency = c("0" = "Incongruent",
                                                          "1" = "Congruent")))
 
+print(p)
+ggsave(filename = 'expt_2_congruency_by_phase.png', plot = p, path = '../results/plots/', width = 5, height = 4, device='png', dpi=300)
 
 results_table_qc_pass_ptp_analyzed_gathered %>% 
         filter(experiment == which_expt) %>%
@@ -967,7 +998,7 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
         geom_point(pch=21,
                    position = position_jitterdodge(dodge.width=0.5,
                                                    jitter.width=0.05)) +
-        ylab("Percent correct in sessions 1&2") + 
+        ylab("Percent correct in blocks 1&2") + 
         theme(axis.text.x = element_text(size=10),
               axis.text.y = element_text(size=10),
               axis.title.x=element_blank(),
@@ -1010,7 +1041,7 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
 
 ```{r congruency-effect-expt-2-by-arrangements, fig.width=4, fig.height=4}
 
-results_table_qc_pass_ptp_analyzed %>%
+p <- results_table_qc_pass_ptp_analyzed %>%
         filter(experiment == which_expt) %>%
         ggplot(aes(x=congruency,
                    y=phase_2_min_phase_1_ses_1_2_perf,
@@ -1023,12 +1054,15 @@ results_table_qc_pass_ptp_analyzed %>%
         # geom_point(pch=21,
         #            position = position_jitterdodge(dodge.width=0.5,
         #                                            jitter.width=0.1)) +
-        geom_dotplot(binaxis='y', 
-                     stackdir='center',
-                     stackratio=1,
-                     dotsize=0.7, 
-                     fill="black",
-                     alpha=0.2) +
+        # geom_dotplot(binaxis='y', 
+        #              stackdir='center',
+        #              stackratio=1,
+        #              dotsize=0.7, 
+        #              fill="black",
+        #              alpha=0.2) +
+        geom_jitter(width = 0.15,
+                    height = 0,
+                    alpha = 0.2) +
         stat_summary(fun=mean, 
                      geom="point",
                      shape=20,
@@ -1050,6 +1084,11 @@ results_table_qc_pass_ptp_analyzed %>%
         facet_wrap(~arr_phase_1_name,
                    labeller = labeller(arr_phase_1_name = c("3" = "Start with Arr3",
                                                          "4" = "Start with Arr4")))
+
+print(p)
+
+ggsave(filename = 'expt_2_congruency_by_arr.png', plot = p, path = '../results/plots/', width = 5, height = 4, device='png', dpi=300)
+
 
 results_table_qc_pass_ptp_analyzed %>%
         filter(experiment == which_expt) %>%
@@ -1145,7 +1184,7 @@ results_table_qc_pass_ptp_analyzed %>%
 
 ```{r congruency-effect-expt-2-by-phases-by-arrangements, fig.width=6, fig.height=4}
 
-results_table_qc_pass_ptp_analyzed_gathered %>% 
+p <- results_table_qc_pass_ptp_analyzed_gathered %>% 
         filter(experiment == which_expt) %>%
         ggplot(aes(x=phase,
                    y=ses_1_2_perf,
@@ -1169,7 +1208,7 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
                      color=stat_color,
                      fill=stat_color,
                      aes(color='mean')) +   
-        ylab("% correct in sessions 1&2") + 
+        ylab("% correct in blocks 1&2") + 
         scale_x_discrete(labels=c('Phase 1','Phase 2')) +
         scale_fill_manual(values=c('#045a8d','#d0d1e6')) +         
         theme(axis.text.x = element_text(size=10),
@@ -1183,6 +1222,10 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
                                                       '1'='Congruent')),
                    nrow = 1)
 
+print(p)
+
+ggsave(filename = 'expt_2_congruency_by_phase_by_arr.png', plot = p, path = '../results/plots/', width = 6, height = 4, device='png', dpi=300)
+
 results_table_qc_pass_ptp_analyzed_gathered %>% 
         filter(experiment == which_expt) %>%
         ggplot(aes(x=congruency,
@@ -1192,7 +1235,7 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
         geom_point(pch=21,
                    position = position_jitterdodge(dodge.width=0.5,
                                                    jitter.width=0.05)) +
-        ylab("Percent correct in sessions 1&2") + 
+        ylab("Percent correct in blocks 1&2") + 
         theme(axis.text.x = element_text(size=10),
               axis.text.y = element_text(size=10),
               axis.title.x=element_blank(),
@@ -1261,10 +1304,10 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
 
 ```{r individual-targets-incongruent-expt-2,  fig.width=14, fig.height=4}
 
-# Filter to have only sessions 1-2, only incongruent, phase, arrangement, and 
+# Filter to have only blocks 1-2, only incongruent, phase, arrangement, and 
 # the target that was the prompt for the trial
 
-long_form_data_qc_pass_ptp_analyzed %>%
+p <- long_form_data_qc_pass_ptp_analyzed %>%
         filter(experiment == which_expt,
                (session %in% c(1,2))) %>%
         select(congruency,
@@ -1294,9 +1337,9 @@ long_form_data_qc_pass_ptp_analyzed %>%
                      position=position_dodge(width = 0.9),
                      outlier.shape = NA) +
         geom_line(aes(group=ptp),
-                  alpha=0.2) +
+                  alpha=0.1) +
         geom_point(pch=21,
-                   alpha=0.3) +
+                   alpha=0.1) +
         stat_summary(fun=mean, geom="point", shape=19, size=2, 
                      position=position_dodge(0.9)) +
         # stat_summary(fun=median, geom="point", shape=6, size=2, position=position_dodge(0.9)) +
@@ -1311,12 +1354,15 @@ long_form_data_qc_pass_ptp_analyzed %>%
                 legend.position="",
                 legend.title=element_blank(),
                 plot.title = element_text(size=11),
-                axis.text.x = element_text(size=7),
+                axis.text.x = element_text(size=10,
+                                           angle = 90,
+                                           vjust = 0.5,
+                                           hjust = 1),
                 axis.text.y = element_text(size=11)
                 ) +        
         # scale_fill_discrete(name = "", labels = c("sledge-PA1", "gingerbred man-PA2", "bear-PA3")) +
         # scale_x_discrete(labels=c('Arr1','Arr2')) +
-        ylab('% Correct in Sessions 1&2') + 
+        ylab('% Correct in blocks 1&2') + 
         xlab('')
 
 
@@ -1349,10 +1395,12 @@ long_form_data_qc_pass_ptp_analyzed %>%
                 axis.text.y = element_text(size=11)
                 ) +        
         scale_x_discrete(labels=c('Arr3','Arr4')) +
-        ylab('% Correct Sessions 1&2') + 
+        ylab('% Correct blocks 1&2') + 
         xlab('Arrangement in this phase')
         
+print(p)
 
+ggsave(filename = 'expt_2_performance_by_toy.png', plot = p, path = '../results/plots/', width = 12, height = 5, device='png', dpi=300)
 ```
 
 ## ANOVA 3-way (frequentist): congruency, concept order, arrangement order
@@ -1551,7 +1599,7 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
                                                          "15" = "Arr4"))) +        
         theme(legend.position="top") + 
         scale_x_discrete(labels=c('Incongruent','Congruent')) + 
-        ylab("Percent correct in sessions 1&2")
+        ylab("Percent correct in blocks 1&2")
 
 
 
@@ -1616,7 +1664,7 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
         facet_wrap(~concept_phase_1) +
         theme(legend.position="top") + 
         scale_x_discrete(labels=c('Incongruent','Congruent')) +
-        ylab("Percent correct in sessions 1&2")
+        ylab("Percent correct in blocks 1&2")
 
 # Grid display, showing experiment by concept order
 results_table_qc_pass_ptp_analyzed_gathered %>% 
@@ -1633,7 +1681,7 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
                           labels=c('Phase 1','Phase 2')) + 
         theme(legend.position="top") + 
         scale_x_discrete(labels=c('Incongruent','Congruent')) +
-        ylab("Percent correct in sessions 1&2") + 
+        ylab("Percent correct in blocks 1&2") + 
         facet_grid(arrangement_pairs ~ concept_phase_1)
 
 
@@ -1662,7 +1710,7 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
                                                          "15" = "Arr4"))) +        
         theme(legend.position="top") + 
         scale_x_discrete(labels=c('Incongruent','Congruent')) + 
-        ylab("Percent correct in sessions 1&2") + 
+        ylab("Percent correct in blocks 1&2") + 
         ggtitle('Beak Tail Space') + 
         coord_cartesian(ylim=(c(0.5,1.0)))
 
@@ -1691,7 +1739,7 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
                                                          "15" = "Arr4"))) +        
         theme(legend.position="top") + 
         scale_x_discrete(labels=c('Incongruent','Congruent')) + 
-        ylab("Percent correct in sessions 1&2") + 
+        ylab("Percent correct in blocks 1&2") + 
         ggtitle('Neck Legs Space') + 
         coord_cartesian(ylim=(c(0.5,1.0)))
 
@@ -1724,7 +1772,7 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
                           labels=c('Phase 1','Phase 2')) + 
         theme(legend.position="top") + 
         scale_x_discrete(labels=c('Incongruent','Congruent')) +
-        ylab("Percent correct in sessions 1&2") + 
+        ylab("Percent correct in blocks 1&2") + 
         facet_grid(arr_phase_1_1 ~ concept_phase_1)
 
 ```
@@ -1732,7 +1780,7 @@ results_table_qc_pass_ptp_analyzed_gathered %>%
 
 ```{r individual-targets-incongruent-expt-1-concept-order, fig.height = 5, fig.width = 10}
 
-# Filter to have only sessions 1-2, only incongruent, phase, arrangement, and the target that was the prompt for the trial
+# Filter to have only blocks 1-2, only incongruent, phase, arrangement, and the target that was the prompt for the trial
 
 long_form_data_qc_pass_ptp %>%
         filter(experiment == which_expt & 
@@ -1759,7 +1807,7 @@ long_form_data_qc_pass_ptp %>%
                 axis.title.x=element_blank()
                 ) + 
         # scale_x_discrete(labels=c('Arr3','Arr4')) +
-        ylab('% Correct Sessions 1&2') + 
+        ylab('% Correct blocks 1&2') + 
         facet_wrap(~phase) 
         
 
@@ -1770,7 +1818,7 @@ long_form_data_qc_pass_ptp %>%
 ```{r phase-1-concept-diff-by-arrangement, fig.width=15}
 
 
-# Just phase 1 data for sessions 1 and 2, by arrangement order
+# Just phase 1 data for blocks 1 and 2, by arrangement order
 results_table_qc_pass_ptp_analyzed %>%
         ggplot(aes(x=arr_phase_1_1,y=phase_1_ses_1_2_perf,fill=concept_phase_1)) + 
         geom_boxplot(width=0.5,outlier.shape = NA) + 
